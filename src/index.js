@@ -1,15 +1,6 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
+import React from "react"
+import ReactDOM from "react-dom"
+import App from "./App"
+import './style.css'
 
-function TestHtml() {
-    return (
-        <div>
-            <h1>My react is working!</h1>
-        </div>
-    )
-}
-
-ReactDOM.render(
-<TestHtml />,
-  document.getElementById('root')
-);
+ReactDOM.render(<App />, document.getElementById("root"))
