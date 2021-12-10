@@ -1,17 +1,21 @@
 {
   "files": {
-    "main.js": "/static/js/main.4780c01a.chunk.js",
-    "main.js.map": "/static/js/main.4780c01a.chunk.js.map",
+    "main.css": "/static/css/main.7d4f6c92.chunk.css",
+    "main.js": "/static/js/main.c07b3d64.chunk.js",
+    "main.js.map": "/static/js/main.c07b3d64.chunk.js.map",
     "runtime-main.js": "/static/js/runtime-main.5d025693.js",
     "runtime-main.js.map": "/static/js/runtime-main.5d025693.js.map",
-    "static/js/2.380b7668.chunk.js": "/static/js/2.380b7668.chunk.js",
-    "static/js/2.380b7668.chunk.js.map": "/static/js/2.380b7668.chunk.js.map",
+    "static/js/2.3e578b7e.chunk.js": "/static/js/2.3e578b7e.chunk.js",
+    "static/js/2.3e578b7e.chunk.js.map": "/static/js/2.3e578b7e.chunk.js.map",
     "index.html": "/index.html",
-    "static/js/2.380b7668.chunk.js.LICENSE.txt": "/static/js/2.380b7668.chunk.js.LICENSE.txt"
+    "static/css/main.7d4f6c92.chunk.css.map": "/static/css/main.7d4f6c92.chunk.css.map",
+    "static/js/2.3e578b7e.chunk.js.LICENSE.txt": "/static/js/2.3e578b7e.chunk.js.LICENSE.txt",
+    "static/media/troll-face.ef4deb6e.png": "/static/media/troll-face.ef4deb6e.png"
   },
   "entrypoints": [
     "static/js/runtime-main.5d025693.js",
-    "static/js/2.380b7668.chunk.js",
-    "static/js/main.4780c01a.chunk.js"
+    "static/js/2.3e578b7e.chunk.js",
+    "static/css/main.7d4f6c92.chunk.css",
+    "static/js/main.c07b3d64.chunk.js"
   ]
 }
