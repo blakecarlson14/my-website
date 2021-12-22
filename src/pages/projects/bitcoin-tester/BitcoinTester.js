@@ -11,7 +11,17 @@ export default function BitcoinTester() {
 
   React.useEffect(() => {
       async function getPrices() {
-          let fetchCoin = coin === 'btc' ? 'bitcoin' : 'ethereum'
+          let fetchCoin = 'bitcoin'
+          switch(coin) {
+            case 'eth':
+              fetchCoin = 'ethereum'
+              break;
+            case 'dot':
+              fetchCoin = 'polkadot'
+              break;
+            default:
+              break;
+          }
           const res = await fetch(`https://api.coingecko.com/api/v3/coins/${fetchCoin}/market_chart/range/?vs_currency=usd&from=946733027&to=1640157827`)
           const data = await res.json()
           
@@ -28,12 +38,25 @@ export default function BitcoinTester() {
     result.push(obj)
   })
 
+  let textLabel = 'BTC'
+  switch(coin) {
+    case 'eth':
+      textLabel = 'ETH'
+      break;
+    case 'dot':
+      textLabel = 'DOT'
+      break;
+    default:
+      break;
+  }
+
   return(
     <div>
-      <Dropdown text={coin === 'btc' ? 'BTC' : 'ETH'} pointing className='link item'>
+      <Dropdown text={textLabel} pointing className='link item'>
         <Dropdown.Menu>
             <Dropdown.Item onClick={() => setCoin('btc')}>BTC</Dropdown.Item>
             <Dropdown.Item onClick={() => setCoin('eth')}>ETH</Dropdown.Item>
+            <Dropdown.Item onClick={() => setCoin('dot')}>DOT</Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
       <Dropdown text={yScale === 'linear' ? 'Linear' : 'Log'} pointing className='link item'>
