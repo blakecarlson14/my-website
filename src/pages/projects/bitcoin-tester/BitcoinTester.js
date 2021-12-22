@@ -5,27 +5,24 @@ import dayjs from 'dayjs'
 import { Dropdown } from 'semantic-ui-react'
 
 export default function BitcoinTester() {
-  const [btcPrice, setBtcPrice] = React.useState([])
+  const [coinPrice, setCoinPrice] = React.useState([])
   const [yScale, setYScale] = React.useState('linear')
+  const [coin, setCoin] = React.useState('btc')
 
   React.useEffect(() => {
       async function getPrices() {
-          const res = await fetch("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart/range/?vs_currency=usd&from=946733027&to=1640157827")
+          let fetchCoin = coin === 'btc' ? 'bitcoin' : 'ethereum'
+          const res = await fetch(`https://api.coingecko.com/api/v3/coins/${fetchCoin}/market_chart/range/?vs_currency=usd&from=946733027&to=1640157827`)
           const data = await res.json()
           
-          setBtcPrice(data.prices)
+          setCoinPrice(data.prices)
+          console.log(`coin ${coin}`)
       }
       getPrices()
-  }, [])
-
-  // const data = btcPrice.map((value) => value.map((nextValue) => ({nextValue})))
-
-  // const data = btcPrice.map(([ time, price ]) => [ time, price ]);
-
-  // console.table(btcPrice)
+  }, [coin])
 
   let result = [];
-  btcPrice.map(entry => {
+  coinPrice.map(entry => {
     let newDate = dayjs(entry[0]).format("MM/DD/YYYY");
     let obj = {date: newDate, price: entry[1]}
     result.push(obj)
@@ -33,6 +30,12 @@ export default function BitcoinTester() {
 
   return(
     <div>
+      <Dropdown text={coin === 'btc' ? 'BTC' : 'ETH'} pointing className='link item'>
+        <Dropdown.Menu>
+            <Dropdown.Item onClick={() => setCoin('btc')}>BTC</Dropdown.Item>
+            <Dropdown.Item onClick={() => setCoin('eth')}>ETH</Dropdown.Item>
+        </Dropdown.Menu>
+      </Dropdown>
       <Dropdown text={yScale === 'linear' ? 'Linear' : 'Log'} pointing className='link item'>
         <Dropdown.Menu>
             <Dropdown.Item onClick={() => setYScale('linear')}>Linear</Dropdown.Item>
