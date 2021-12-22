@@ -11,7 +11,7 @@ main {
     padding: 36px;
 }
 
-.header {
+.meme--header {
     display: flex;
     align-items: center;
     height: 65px;
@@ -20,17 +20,17 @@ main {
     padding: 20px;
 }
 
-.header--image {
+.meme--header--image {
     height: 100%;
     margin-right: 6px;
 }
 
-.header--title {
+.meme--header--title {
     font-size: 1.25rem;
     margin-right: auto;
 }
 
-.header--project {
+.meme--header--project {
     font-size: 0.75rem;
     font-weight: 500;
 }

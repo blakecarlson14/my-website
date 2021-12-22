@@ -1,4 +1,5 @@
 import React from "react"
+import { Image } from "semantic-ui-react"
 
 export default function Meme() {
     
@@ -63,7 +64,7 @@ export default function Meme() {
                 </button>
             </div>
             <div className="meme">
-                <img src={meme.randomImage} className="meme--image" />
+                <Image src={meme.randomImage} className="meme--image"/>
                 <h2 className="meme--text top">{meme.topText}</h2>
                 <h2 className="meme--text bottom">{meme.bottomText}</h2>
             </div>
