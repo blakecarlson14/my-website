@@ -3,7 +3,7 @@ import Home from "./pages/home/Home.js"
 import MemeGenerator from "./pages/projects/meme-generator/MemeGenerator.js"
 import BitcoinTester from "./pages/projects/bitcoin-tester/BitcoinTester.js";
 import Navbar from "./components/Navbar/Navbar"
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import 'semantic-ui-css/semantic.min.css';
 
 
