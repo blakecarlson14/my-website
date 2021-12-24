@@ -1,19 +1,9 @@
 import React from 'react'
-// import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import moment from 'moment'
 import dayjs from 'dayjs'
 import { Dropdown, Loader, Segment, Dimmer } from 'semantic-ui-react'
 import TopCoinFetcher from './components/TopCoinFetcher';
-import {
-  XYPlot,
-  XAxis,
-  YAxis,
-  HorizontalGridLines,
-  VerticalGridLines,
-  LineSeries
-} from 'react-vis';
-import {curveCatmullRom} from 'd3-shape';
 
 export default function BitcoinTester() {
 
@@ -69,20 +59,7 @@ export default function BitcoinTester() {
       result.push(obj)
     })
 
-  //  const options = {
-  //     responsive: true
-  //   };
-
-  
-  const data = {
-    labels: [''],
-    datasets: [
-      {
-        label: 'dataset 1',
-        data: result
-      }
-    ]
-  }
+    console.log(typeof coin.symbol)
 
     return (
       <div>
@@ -99,54 +76,7 @@ export default function BitcoinTester() {
       <Dropdown.Item onClick={() => setYScale('log')}>Log</Dropdown.Item>
   </Dropdown.Menu>
 </Dropdown>
-<XYPlot width={300} height={300}>
-      <HorizontalGridLines style={{stroke: '#B7E9ED'}} />
-      <VerticalGridLines style={{stroke: '#B7E9ED'}} />
-      <XAxis
-        title="X Axis"
-        style={{
-          line: {stroke: '#ADDDE1'},
-          ticks: {stroke: '#ADDDE1'},
-          text: {stroke: 'none', fill: '#6b6b76', fontWeight: 600}
-        }}
-      />
-      <YAxis title="Y Axis" />
-      <LineSeries
-        className="first-series"
-        data={[{x: 1, y: 3}, {x: 2, y: 5}, {x: 3, y: 15}, {x: 4, y: 12}]}
-        style={{
-          strokeLinejoin: 'round',
-          strokeWidth: 4
-        }}
-      />
-      <LineSeries className="second-series" data={null} />
-      <LineSeries
-        className="third-series"
-        curve={'curveMonotoneX'}
-        data={[{x: 1, y: 10}, {x: 2, y: 4}, {x: 3, y: 2}, {x: 4, y: 15}]}
-        strokeDasharray="7, 3"
-      />
-      <LineSeries
-        className="fourth-series"
-        curve={curveCatmullRom.alpha(0.5)}
-        data={[{x: 1, y: 7}, {x: 2, y: 11}, {x: 3, y: 9}, {x: 4, y: 2}]}
-      />
-    </XYPlot>
-
-</div>
-    )
-  } else {
-    return (
-      <Segment>
-        <Dimmer active>
-          <Loader />
-        </Dimmer>
-      </Segment>
-    )
-  }
-}
-
-{/* <ResponsiveContainer height={600}>
+<ResponsiveContainer height={600}>
   <LineChart 
     data={result} 
     margin={{ top: 10, right: 20, left: 20, bottom: 5 }}
@@ -167,4 +97,16 @@ export default function BitcoinTester() {
       formatter={value => `$${value.toFixed(2)}`}
       />
   </LineChart>
-</ResponsiveContainer> */}
+</ResponsiveContainer>
+</div>
+    )
+  } else {
+    return (
+      <Segment>
+        <Dimmer active>
+          <Loader />
+        </Dimmer>
+      </Segment>
+    )
+  }
+}
