@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from "react-router-dom";
-import { Menu, Dropdown } from "semantic-ui-react"
+import { Menu, Dropdown, DropdownHeader, DropdownDivider } from "semantic-ui-react"
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -14,16 +14,24 @@ export default function Navbar() {
       </Menu.Item>
       <Dropdown text='Projects' pointing className='link item'>
         <Dropdown.Menu>
+          <DropdownHeader>Scrimba</DropdownHeader>
           <Dropdown.Item onClick={() =>
             navigate(`/projects/meme-generator`)
           }>
             Meme Generator
           </Dropdown.Item>
-          <Dropdown.Item onClick={() =>
-            navigate('/projects/bitcoin-tester')
-          }>
-            Bitcoin Tester
-          </Dropdown.Item>
+          <DropdownDivider/>
+          <DropdownHeader>Crypto</DropdownHeader>
+            <Dropdown.Item onClick={() =>
+              navigate('/projects/bitcoin-tester')
+            }>
+              Bitcoin Tester
+            </Dropdown.Item>
+            <Dropdown.Item onClick={() =>
+              navigate('/projects/crypto-charts')
+            }>
+              Charts
+            </Dropdown.Item>
         </Dropdown.Menu>
       </Dropdown>
     </Menu>
