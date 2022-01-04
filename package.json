@@ -4,6 +4,10 @@
   "homepage": "http://www.blakeacarlson.com",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@mui/material": "^5.2.7",
+    "@mui/styled-engine-sc": "^5.1.0",
     "@nivo/core": "^0.76.0",
     "@nivo/line": "^0.76.0",
     "@testing-library/jest-dom": "^5.11.4",
@@ -21,6 +25,7 @@
     "recharts": "^2.1.8",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^2.0.1",
+    "styled-components": "^5.3.3",
     "web-vitals": "^1.0.1"
   },
   "scripts": {
