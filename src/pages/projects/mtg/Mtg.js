@@ -69,9 +69,7 @@ const Mtg = () => {
           } else {
             const res = await fetch(`https://api.scryfall.com/cards/search?q=${lookupString}`)
             const data = await res.json()
-            setCards( cards => {
-              return [...cards, ...data.data]
-            })
+            setCards(data.data)
             if (data.has_more) {
               setTimeout(function(){getScryfallCards(data.next_page)}, 100)
             }
