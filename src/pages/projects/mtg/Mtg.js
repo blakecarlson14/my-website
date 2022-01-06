@@ -6,6 +6,7 @@ import { ImageList, ImageListItem } from '@mui/material'
 const Mtg = () => {
   const [inputs, setInputs] = React.useState([])
   const [cards, setCards] = React.useState([])
+  const [isFetching, setIsFetching] = React.useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,9 +15,9 @@ const Mtg = () => {
       [name]: value,
     });
   };
-  
+
   const handleSubmit = (input) => {
-    async function getScryfallCards () {
+    async function getScryfallCards (nextPage) {
       let colors=[]
       if (input.whiteCheck) {
         colors.push('w')
@@ -56,10 +57,25 @@ const Mtg = () => {
 
       if (lookupString !== '') {
         try {
-          const res = await fetch(`https://api.scryfall.com/cards/search?q=${lookupString}`)
-          const data = await res.json()
-
-          setCards(data.data)
+          if (nextPage) {
+            const res = await fetch(nextPage)
+            const data = await res.json()
+            setCards( cards => {
+              return [...cards, ...data.data]
+            })
+            if (data.has_more) {
+              setTimeout(function(){getScryfallCards(data.next_page)}, 100)
+            }
+          } else {
+            const res = await fetch(`https://api.scryfall.com/cards/search?q=${lookupString}`)
+            const data = await res.json()
+            setCards( cards => {
+              return [...cards, ...data.data]
+            })
+            if (data.has_more) {
+              setTimeout(function(){getScryfallCards(data.next_page)}, 100)
+            }
+          }
         }
         catch (error) {
           console.log(`error: ${error}`)
@@ -126,7 +142,9 @@ const Mtg = () => {
         console.log('error')
       }
     }
+    setIsFetching(true)
     getScryfallCards()
+    setIsFetching(false)
   }
 
   if (cards && cards.length > 0) {
@@ -138,6 +156,7 @@ const Mtg = () => {
         }}/>
         <div>
           <ImageList cols={8}>
+          {console.log(`cards3: ${cards.length}`)}
           {cards.map(card => (
             card?.image_uris?.normal ?
                 <ImageListItem>
