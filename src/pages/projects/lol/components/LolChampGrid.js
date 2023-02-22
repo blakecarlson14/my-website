@@ -17,7 +17,7 @@ export const LolChampGrid = (props) => {
                 return (
                   <ImageListItem onClick={ () => champClickHandler(data?.id) }>
                     <img
-                      src={ `http://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${data?.image?.full}` }
+                      src={ `https://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${data?.image?.full}` }
                       loading='lazy'
                     />
                   </ImageListItem>

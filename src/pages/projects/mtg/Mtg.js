@@ -18,7 +18,7 @@ const Mtg = () => {
 
   const handleSubmit = (input) => {
     function getScryfallCards (nextPage) {
-      let colors=[]
+      let colors = []
       if (input.whiteCheck) {
         colors.push('w')
       }
@@ -61,20 +61,20 @@ const Mtg = () => {
         }
       }
 
-      if(input.cmc !== '') {
+      if (input.cmc !== '') {
         lookup.push(encodeURIComponent(`cmc=${input.cmc}`))
       }
 
-      if(input.power !== '') {
+      if (input.power !== '') {
         lookup.push(encodeURIComponent(`pow=${input.power}`))
       }
 
-      if(input.toughness !== '') {
+      if (input.toughness !== '') {
         lookup.push(encodeURIComponent(`tou=${input.toughness}`))
       }
 
-      if(input.format !== '') {
-        if(input.legal === 'legal') {
+      if (input.format !== '') {
+        if (input.legal === 'legal') {
           lookup.push(encodeURIComponent(`f=${input.format}`))
         } else if (input.legal === 'restricted') {
           lookup.push(encodeURIComponent(`restricted=${input.format}`))
@@ -83,12 +83,12 @@ const Mtg = () => {
         }
       }
 
-      if(input.set !== '') {
+      if (input.set !== '') {
         lookup.push(encodeURIComponent(`e=${input.set}`))
       }
 
-      let rarities=[]
-      
+      let rarities = []
+
       if (input.commonCheck) {
         rarities.push('rarity%3Dc')
       }
@@ -106,7 +106,7 @@ const Mtg = () => {
 
       rarityString = rarities.join('+OR+')
 
-      if(rarityString !== '') {
+      if (rarityString !== '') {
         lookup.push(`%28${rarityString}%29`)
       }
 
@@ -150,11 +150,11 @@ const Mtg = () => {
             fetch(nextPage)
               .then(response => response.json())
               .then(data => {
-                setCards( cards => {
+                setCards(cards => {
                   return [...cards, ...data.data]
                 })
                 if (data.has_more) {
-                  setTimeout(function(){getScryfallCards(data.next_page)}, 100)
+                  setTimeout(function () { getScryfallCards(data.next_page) }, 100)
                 } else {
                   setIsFetching(false)
                 }
@@ -166,7 +166,7 @@ const Mtg = () => {
               .then(data => {
                 setCards(data.data)
                 if (data.has_more) {
-                  setTimeout(function(){getScryfallCards(data.next_page)}, 100)
+                  setTimeout(function () { getScryfallCards(data.next_page) }, 100)
                 } else {
                   setIsFetching(false)
                 }
@@ -183,7 +183,7 @@ const Mtg = () => {
     }
 
     async function getCards () {
-      let colors=[]
+      let colors = []
       if (input.whiteCheck) {
         colors.push('white')
       }
@@ -214,7 +214,7 @@ const Mtg = () => {
         lookup.push(`colors=${colorString}`)
       }
 
-      if(input.cmc) {
+      if (input.cmc) {
         lookup.push(`cmc=${input.cmc}`)
       }
 
@@ -242,52 +242,54 @@ const Mtg = () => {
   }
 
   if (cards && cards.length > 0) {
-    return(
+    return (
       <div>
-        <MtgForm 
-          handleSubmit={(e, input) => {
+        <MtgForm
+          handleSubmit={ (e, input) => {
             e.preventDefault()
             handleSubmit(input)
-          }}
-          isFetching={isFetching}
+          } }
+          isFetching={ isFetching }
         />
         <div>
-          <ImageList cols={8}>
-          {cards.map(card => (
-            card?.image_uris?.normal ?
-                <ImageListItem>
-                  <img
-                    src={card?.image_uris?.normal}
-                    loading="lazy"
-                  />
-                </ImageListItem> :
-
-                card?.card_faces[0]?.image_uris.normal ?
+          <ImageList cols={ 8 }>
+            {
+              cards.map(card => (
+                card?.image_uris?.normal ?
                   <ImageListItem>
-                  <img
-                    src={card?.card_faces[0]?.image_uris.normal}
-                    loading="lazy"
-                  />
+                    <img
+                      src={ card?.image_uris?.normal }
+                      loading="lazy"
+                    />
                   </ImageListItem> :
 
+                  card?.card_faces[0]?.image_uris.normal ?
+                    <ImageListItem>
+                      <img
+                        src={ card?.card_faces[0]?.image_uris.normal }
+                        loading="lazy"
+                      />
+                    </ImageListItem> :
+
                     null
-            ))}
+              ))
+            }
           </ImageList>
-        </div> 
+        </div>
       </div>
     )
   }
   else {
-    return(
+    return (
       <div>
         <MtgForm
-          handleSubmit={(e, input) => {
+          handleSubmit={ (e, input) => {
             e.preventDefault()
             handleSubmit(input)
-          }}
-          isFetching={isFetching}
+          } }
+          isFetching={ isFetching }
         />
-        </div>)
+      </div>)
   }
 }
 export default Mtg

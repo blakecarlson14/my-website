@@ -21,7 +21,7 @@ export const LolChampions = () => {
         if (versionResponse.ok) {
           const versionResponseJson = await versionResponse.json()
           const curVersion = versionResponseJson[0]
-        const champDataResponse = await fetch(`http://ddragon.leagueoflegends.com/cdn/${curVersion}/data/en_US/champion/${champId}.json`)
+        const champDataResponse = await fetch(`https://ddragon.leagueoflegends.com/cdn/${curVersion}/data/en_US/champion/${champId}.json`)
         if (champDataResponse.ok) {
           const champDataResponseJson = await champDataResponse.json()
           const champKey = Object.keys(champDataResponseJson?.data)[0]
@@ -53,7 +53,7 @@ export const LolChampions = () => {
             state?.championData?.image?.full ?
 
               <img
-                src={ `http://ddragon.leagueoflegends.com/cdn/${state?.version}/img/champion/${state?.championData?.image?.full}` }
+                src={ `https://ddragon.leagueoflegends.com/cdn/${state?.version}/img/champion/${state?.championData?.image?.full}` }
               />
               :
               <>
@@ -68,7 +68,7 @@ export const LolChampions = () => {
               <Grid item>
               <Tooltip describeChild title={spell?.description}>
               <img
-                src={`http://ddragon.leagueoflegends.com/cdn/${state?.version}/img/spell/${spell?.image?.full}`}
+                src={`https://ddragon.leagueoflegends.com/cdn/${state?.version}/img/spell/${spell?.image?.full}`}
               />
               </Tooltip>
               </Grid>
