@@ -46,6 +46,13 @@ export default function Navbar () {
           }>
             League of Legends Champion Scraper
           </DropdownItem>
+          <DropdownDivider />
+          <DropdownHeader>ChatGPT</DropdownHeader>
+          <DropdownItem onClick={ () =>
+            navigate('/projects/chatgpt')
+          }>
+            ChatGPT Example
+          </DropdownItem>
         </Dropdown.Menu>
       </Dropdown>
     </Menu>

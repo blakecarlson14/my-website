@@ -17,6 +17,8 @@
     "caniuse-lite": "^1.0.30001457",
     "chart.js": "^3.7.0",
     "dayjs": "^1.10.7",
+    "lodash": "^4.17.21",
+    "lodash.shuffle": "^4.2.0",
     "moment": "^2.29.1",
     "react": "latest",
     "react-chartjs-2": "^4.0.0",

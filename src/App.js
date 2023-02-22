@@ -9,6 +9,8 @@ import { LolChampions } from "./pages/projects/lol/LolChampions.js";
 import Navbar from "./components/Navbar/Navbar"
 import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import 'semantic-ui-css/semantic.min.css';
+import { ChatGpt } from "./pages/projects/chatgpt/ChatGpt.jsx";
+import "./styles.css"
 
 
 export default function App() {
@@ -24,6 +26,7 @@ export default function App() {
           <Route exact path="/projects/mtg" element={<Mtg />}/>
           <Route exact path="/projects/lol" element={<Lol />}/>
           <Route exact path="/projects/lol/champions/*" element={<LolChampions />}/>
+          <Route exact path="/projects/chatgpt" element={<ChatGpt />}/>
         </Routes>
       </Router>
     </div>
