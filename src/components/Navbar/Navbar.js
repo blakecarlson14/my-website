@@ -39,6 +39,13 @@ export default function Navbar () {
           }>
             MTG Card Lookup
           </DropdownItem>
+          <DropdownDivider />
+          <DropdownHeader>League of Legends</DropdownHeader>
+          <DropdownItem onClick={ () =>
+            navigate('/projects/lol')
+          }>
+            League of Legends Champion Scraper
+          </DropdownItem>
         </Dropdown.Menu>
       </Dropdown>
     </Menu>
