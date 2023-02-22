@@ -66,7 +66,7 @@ export const LolChampions = () => {
           state?.championData?.spells.map((spell) => {
             return(
               <Grid item>
-              <Tooltip describeChild title={spell?.description}>
+              <Tooltip enterTouchDelay={0} leaveTouchDelay={0} title={spell?.description}>
               <img
                 src={`https://ddragon.leagueoflegends.com/cdn/${state?.version}/img/spell/${spell?.image?.full}`}
               />
