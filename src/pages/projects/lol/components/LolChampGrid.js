@@ -3,6 +3,7 @@ import { ImageListItem, ImageList } from '@mui/material';
 
 export const LolChampGrid = (props) => {
   const championData = props?.championData
+  const version = props?.version
   const champClickHandler = props?.champClickHandler
   
 
@@ -16,7 +17,7 @@ export const LolChampGrid = (props) => {
                 return (
                   <ImageListItem onClick={ () => champClickHandler(data?.id) }>
                     <img
-                      src={ `http://ddragon.leagueoflegends.com/cdn/13.3.1/img/champion/${data?.image?.full}` }
+                      src={ `http://ddragon.leagueoflegends.com/cdn/${version}/img/champion/${data?.image?.full}` }
                       loading='lazy'
                     />
                   </ImageListItem>

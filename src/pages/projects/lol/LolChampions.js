@@ -8,19 +8,27 @@ export const LolChampions = () => {
   const champId = window.location.hash.split('/').pop()
 
   const [state, setState] = useState({
-    championData: {}
+    championData: {},
+    version: ''
   })
 
   useEffect(() => {
     const getChampionData = async () => {
       try {
-        const champDataResponse = await fetch(`http://ddragon.leagueoflegends.com/cdn/13.3.1/data/en_US/champion/${champId}.json`)
+        const versionResponse = await fetch('https://ddragon.leagueoflegends.com/api/versions.json', {
+          cache:"no-store"
+        })
+        if (versionResponse.ok) {
+          const versionResponseJson = await versionResponse.json()
+          const curVersion = versionResponseJson[0]
+        const champDataResponse = await fetch(`http://ddragon.leagueoflegends.com/cdn/${curVersion}/data/en_US/champion/${champId}.json`)
         if (champDataResponse.ok) {
           const champDataResponseJson = await champDataResponse.json()
           const champKey = Object.keys(champDataResponseJson?.data)[0]
           const champData = champDataResponseJson?.data[champKey]
-          setState(state => ({ ...state, championData: champData }))
+          setState(state => ({ ...state, version: curVersion, championData: champData }))
         }
+      }
       } catch (error) {
 
       }
@@ -45,7 +53,7 @@ export const LolChampions = () => {
             state?.championData?.image?.full ?
 
               <img
-                src={ `http://ddragon.leagueoflegends.com/cdn/13.3.1/img/champion/${state?.championData?.image?.full}` }
+                src={ `http://ddragon.leagueoflegends.com/cdn/${state?.version}/img/champion/${state?.championData?.image?.full}` }
               />
               :
               <>
@@ -60,7 +68,7 @@ export const LolChampions = () => {
               <Grid item>
               <Tooltip describeChild title={spell?.description}>
               <img
-                src={`http://ddragon.leagueoflegends.com/cdn/13.3.1/img/spell/${spell?.image?.full}`}
+                src={`http://ddragon.leagueoflegends.com/cdn/${state?.version}/img/spell/${spell?.image?.full}`}
               />
               </Tooltip>
               </Grid>
