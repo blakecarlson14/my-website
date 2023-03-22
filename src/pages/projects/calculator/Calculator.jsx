@@ -1,13 +1,88 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
 export const Calculator = () => {
 
   const [screen, setScreen] = useState('0')
+  const [numBuf, setNumBuf] = useState(null)
+  // const [mathBuf, setMathBuf] = useState([])
+  const [pendingMath, setPendingMath] = useState(false)
+  const [mathOp, setMathOp] = useState(null)
+  const [initial, setInitial] = useState(true)
+
+  useEffect(() => {
+    console.log(`numBuf: ${numBuf}`)
+  }, [numBuf])
+
+  // useEffect(() => {
+  //   console.log(`mathBuf: ${mathBuf}`)
+  // }, [mathBuf])
 
   const doMath = (operator) => {
-    switch (operator) {
+    // let val = screen
+    // console.log(`val: ${val}`)
 
+    switch (operator) {
+      case '/':
+        // val = numBuf / screen
+        // setScreen(val)
+        // setMathBuf(mathBuf => [...mathBuf, operator])
+        setMathOp(operator)
+        break
+      case 'x':
+        // val = numBuf * screen
+        // setScreen(val)
+        // setMathBuf(mathBuf => [...mathBuf, operator])
+        setMathOp(operator)
+        break
+      case '-':
+        // val = numBuf - screen
+        // setScreen(val)
+        // setMathBuf(mathBuf => [...mathBuf, operator])
+        setMathOp(operator)
+        break
+      case '+':
+        // val = numBuf + screen
+        // setScreen(val)
+        // setMathBuf(mathBuf => [...mathBuf, operator])
+        setMathOp(operator)
+        break
+      default:
+        break
     }
+
+    setNumBuf(screen)
+    setPendingMath(true)
+  }
+
+  const doEquals = () => {
+    let screenNum = null
+
+    if (mathOp !== null) {
+      switch (mathOp) {
+        case '/':
+          screenNum = Number(numBuf) / Number(screen)
+          break
+        case 'x':
+          screenNum = Number(numBuf) * Number(screen)
+          break
+        case '-':
+          screenNum = Number(numBuf) - Number(screen)
+          break
+        case '+':
+          screenNum = Number(numBuf) + Number(screen)
+          break
+        default:
+          break
+      }
+    }
+
+    if (screenNum !== null) {
+      setScreen(screenNum)
+      setPendingMath(false)
+      setMathOp(null)
+      setInitial(true)
+    }
+
   }
 
   const handleClick = (val) => {
@@ -15,17 +90,35 @@ export const Calculator = () => {
       switch (val) {
         case 'AC':
           setScreen('0')
+          setNumBuf(null)
+          setPendingMath(false)
+          setMathOp(null)
+          setInitial(true)
           break
         case '=':
+          doEquals()
           break
-        case '+' || '-' || 'x' || '/':
+        case '+':
+        case '-':
+        case 'x':
+        case '/':
           doMath(val)
           break
         case '.':
+          // check if screen already contains a decimal
+          if (!screen.includes('.')) {
+            setScreen(screen => (screen.concat('.')))
+          }
+          break
+        default:
           break
       }
     } else {
-      if (screen === '0') {
+      if(initial) {
+        setInitial(false)
+        setScreen(val)
+      } else if(pendingMath) {
+        setPendingMath(false)
         setScreen(val)
       } else {
         if (screen.length < 8) {
