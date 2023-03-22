@@ -29,3 +29,68 @@
 .square:hover {
   background-color: #eee;
 }
+
+.calculator {
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  background-color: black;
+}
+
+.calcScreen {
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  color: white !important;
+  position: relative !important;
+  padding-right: 15px;
+  font-size: 72px;
+  height: 144px;
+}
+
+.calcButton {
+  width: 100px;
+  height: 100px;
+  border-radius: 100px;
+  border-width: 0px;
+  margin: 5px;
+  font-size: 24;
+  padding: 0px !important;
+  color: white;
+  cursor: pointer;
+  -webkit-transition-duration: 0.2s;
+  transition-duration: 0.2s;
+  user-select: none;
+}
+
+.calcButton:active, .calcButton.light:active, .calcButton.dark:active, .calcButton.orange:active {
+  background-color: lightgray !important;
+}
+
+.calcButton:active:after, .calcButton.light:after, .calcButton.dark:after, .calcButton.orange:after {
+  opacity: 1;
+  transition: 0s
+}
+
+
+.calcButton.light {
+  background-color: rgb(158, 158, 158) !important;
+  color: black;
+}
+
+.calcButton.dark {
+  background-color: rgb(102, 102, 102) !important;
+}
+
+.calcButton.orange {
+  background-color: orange !important;
+}
+
+.calcButton.double {
+  width: 210px;
+}
+
+.calcButton.zero {
+  text-align: left !important;
+  padding-left: 20px !important;
+}
