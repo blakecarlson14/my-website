@@ -114,15 +114,19 @@ export const Calculator = () => {
           break
       }
     } else {
-      if(initial) {
-        setInitial(false)
-        setScreen(val)
-      } else if(pendingMath) {
-        setPendingMath(false)
-        setScreen(val)
+      if(screen === '0' && val === '0') {
+
       } else {
-        if (screen.length < 8 && screen != '0') {
-          setScreen(screen => (screen.concat(val)))
+        if(initial) {
+          setInitial(false)
+          setScreen(val)
+        } else if(pendingMath) {
+          setPendingMath(false)
+          setScreen(val)
+        } else {
+          if (screen.length < 8 && screen != '0') {
+            setScreen(screen => (screen.concat(val)))
+          }
         }
       }
     }
