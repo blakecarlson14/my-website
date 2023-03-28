@@ -23,10 +23,10 @@ export default function App() {
         <Routes>
           <Route exact path="/" element={<Home />}/>
           <Route exact path="/projects/meme-generator" element={<MemeGenerator />}/>
-          <Route exact path="/projects/bitcoin-tester" element={<BitcoinTester />}/>
+          {/* <Route exact path="/projects/bitcoin-tester" element={<BitcoinTester />}/> */}
           <Route exact path="/projects/crypto-charts" element={<CryptoCharts />}/>
           <Route exact path="/projects/mtg" element={<Mtg />}/>
-          <Route exact path="/projects/lolaccount" element={<LolAccountScraper />}/>
+          {/* <Route exact path="/projects/lolaccount" element={<LolAccountScraper />}/> */}
           <Route exact path="/projects/lol" element={<Lol />}/>
           <Route exact path="/projects/lol/champions/*" element={<LolChampions />}/>
           <Route exact path="/projects/chatgpt" element={<ChatGpt />}/>

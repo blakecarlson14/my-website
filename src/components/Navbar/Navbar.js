@@ -22,11 +22,11 @@ export default function Navbar () {
           </Dropdown.Item>
           <DropdownDivider />
           <DropdownHeader>Crypto</DropdownHeader>
-          <Dropdown.Item onClick={ () =>
+          {/* <Dropdown.Item onClick={ () =>
             navigate('/projects/bitcoin-tester')
           }>
             Bitcoin Tester
-          </Dropdown.Item>
+          </Dropdown.Item> */}
           <Dropdown.Item onClick={ () =>
             navigate('/projects/crypto-charts')
           }>
@@ -46,11 +46,11 @@ export default function Navbar () {
           }>
             League of Legends Champion Scraper
           </DropdownItem>
-          <DropdownItem onClick={ () =>
+          {/* <DropdownItem onClick={ () =>
             navigate('/projects/lolaccount')
           }>
             League of Legends Account Scraper
-          </DropdownItem>
+          </DropdownItem> */}
           <DropdownDivider />
           <DropdownHeader>ChatGPT</DropdownHeader>
           <DropdownItem onClick={ () =>
