@@ -3,7 +3,6 @@ import { DropdownMenu, Dropdown, Form } from 'semantic-ui-react';
 import 'semantic-ui-css/semantic.min.css';
 import { LineChart, ResponsiveContainer, XAxis, Label, Line, Tooltip, YAxis } from 'recharts';
 import moment from 'moment';
-import continuousColorLegend from 'react-vis/dist/legends/continuous-color-legend';
 
 export default function BitcoinTester() {
   const [topCoins, setTopCoins] = React.useState([])

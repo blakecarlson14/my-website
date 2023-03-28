@@ -121,7 +121,7 @@ export const Calculator = () => {
         setPendingMath(false)
         setScreen(val)
       } else {
-        if (screen.length < 8) {
+        if (screen.length < 8 && screen != '0') {
           setScreen(screen => (screen.concat(val)))
         }
       }
