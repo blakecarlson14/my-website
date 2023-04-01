@@ -1,5 +1,5 @@
 import React from "react"
-import Home from "./pages/home/Home.js"
+import Home from "./pages/Home/Home"
 import MemeGenerator from "./pages/projects/meme-generator/MemeGenerator"
 import BitcoinTester from "./pages/projects/bitcoin-tester/BitcoinTester";
 import CryptoCharts from "./pages/projects/crypto-charts/CryptoCharts"
@@ -7,7 +7,7 @@ import Mtg from "./pages/projects/mtg/Mtg"
 import { Lol } from "./pages/projects/lol/Lol"
 import { LolChampions } from "./pages/projects/lol/LolChampions.js";
 import Navbar from "./components/Navbar/Navbar"
-import { HashRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import 'semantic-ui-css/semantic.min.css';
 import { ChatGpt } from "./pages/projects/chatgpt/ChatGpt.jsx";
 import "./styles.css"
