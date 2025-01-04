@@ -4,7 +4,7 @@ import Meme from './components/Meme'
 import './style.css'
 
 export default function MemeGenerator() {
-  return(
+  return (
     <div>
       <Header />
       <Meme />
