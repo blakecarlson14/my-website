@@ -1,38 +1,24 @@
-import React from "react"
-import Home from "./pages/Home/Home.js"
-import MemeGenerator from "./pages/projects/meme-generator/MemeGenerator"
-// import BitcoinTester from "./pages/projects/bitcoin-tester/BitcoinTester";
-// import CryptoCharts from "./pages/projects/crypto-charts/CryptoCharts"
-// import Mtg from "./pages/projects/mtg/Mtg"
-// import { Lol } from "./pages/projects/lol/Lol"
-// import { LolChampions } from "./pages/projects/lol/LolChampions.js";
-import { HashRouter as Router, Route, Routes } from "react-router-dom";
-// import { ChatGpt } from "./pages/projects/chatgpt/ChatGpt.jsx";
-import "./styles.css"
-// import { LolAccountScraper } from "./pages/projects/lol/LolAccountScraper.js";
-import { Calculator } from "./pages/projects/calculator/Calculator.jsx";
-import HomeNavbar from "./components/HomeNavbar/HomeNavbar.js";
-import 'bootstrap/dist/css/bootstrap.min.css';
-
+import { Navigate, Route, Routes } from "react-router";
+import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import ChessPage from "./pages/ChessPage";
+import CalculatorPage from "./pages/CalculatorPage";
+import MemePage from "./pages/MemePage";
+import NotFound from "./pages/NotFound";
 
 export default function App() {
   return (
-    <div>
-      <Router>
-        <HomeNavbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/projects/meme-generator" element={<MemeGenerator />} />
-          {/* <Route exact path="/projects/bitcoin-tester" element={<BitcoinTester />}/> */}
-          {/* <Route path="/projects/crypto-charts" element={<CryptoCharts />}/> */}
-          {/* <Route path="/projects/mtg" element={<Mtg />}/> */}
-          {/* <Route exact path="/projects/lolaccount" element={<LolAccountScraper />}/> */}
-          {/* <Route path="/projects/lol" element={<Lol />}/> */}
-          {/* <Route path="/projects/lol/champions/*" element={<LolChampions />}/> */}
-          {/* <Route path="/projects/chatgpt" element={<ChatGpt />}/> */}
-          <Route path="/projects/calculator" element={<Calculator />} />
-        </Routes>
-      </Router>
-    </div>
-  )
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="chess" element={<ChessPage />} />
+        <Route path="lab/calculator" element={<CalculatorPage />} />
+        <Route path="lab/meme-generator" element={<MemePage />} />
+        {/* Paths from the old site */}
+        <Route path="projects/calculator" element={<Navigate to="/lab/calculator" replace />} />
+        <Route path="projects/meme-generator" element={<Navigate to="/lab/meme-generator" replace />} />
+        <Route path="*" element={<NotFound />} />
+      </Route>
+    </Routes>
+  );
 }

@@ -1,70 +1,34 @@
-# Getting Started with Create React App
+# blakeacarlson.com
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+My personal site: React 19, TypeScript and Vite, with plain CSS (no UI framework). It is hosted on GitHub Pages from the `gh-pages` branch.
 
-## Available Scripts
+```bash
+npm install
+npm run dev       # http://localhost:5173
+npm test          # calculator logic tests
+npm run deploy    # build, then publish dist/ to the gh-pages branch
+```
 
-In the project directory, you can run:
+## Layout
 
-### `yarn start`
+| Path | What it is |
+|---|---|
+| `src/config.ts` | Site links and the Jev Plays Chess settings |
+| `src/pages/Home.tsx` | Intro, featured project, project and lab lists |
+| `src/pages/ChessPage.tsx` | Jev Plays Chess: link, optional embed, how it works |
+| `src/pages/CalculatorPage.tsx`, `src/lib/calculator.ts` | Calculator UI and its tested state machine |
+| `src/pages/MemePage.tsx` | Canvas meme generator using imgflip templates |
+| `src/styles.css` | All styles; colors are tokens at the top, with light and dark themes |
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Routing on GitHub Pages
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+The site uses real paths (`/chess`), not hash URLs. The build copies `index.html` to `404.html`, so GitHub Pages serves the app for any path and React Router takes it from there. Old `/#/...` links are redirected on load.
 
-### `yarn test`
+## Jev Plays Chess
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The game runs on its own server (see the jev-plays-chess repo). Set `chess.url` in `src/config.ts` to its address and `chess.access` to match how it is deployed:
 
-### `yarn build`
+- `"invite"`: the server has `ACCESS_CODE` set. The page links to the game and says it is invite-only.
+- `"open"`: no access code. The page also embeds the game in an iframe.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Never put the access code in this repo; everything here is public.
