@@ -86,7 +86,7 @@
   .brief p { margin: 0; font-size: 13px; color: var(--muted); }
   .race { width: 100%; border-collapse: collapse; font-size: 14px; }
   .race td { padding: 5px 0; border-bottom: 1px solid var(--hair); }
-  .race td.p { text-align: right; width: 3.4em; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .race td.p { text-align: right; width: 5.6em; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
   .race td.b { width: 32%; padding-left: 10px; }
   .race tr.cut td { border-bottom: 2px dashed var(--accent); }
   .side .block + .block { margin-top: 22px; }
@@ -222,8 +222,16 @@ const get = async path => {
 const erf = x => { const s = Math.sign(x); x = Math.abs(x); const t = 1 / (1 + 0.3275911 * x);
   return s * (1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x)); };
 const phi = z => 0.5 * (1 + erf(z / Math.SQRT2));
-// Simulated 0%/100% isn't a mathematical lock, so it reads <1% / >99% until the regular season ends.
-const pct = (p, exact) => p == null ? '–' : exact ? `${Math.round(p * 100)}%` : p >= 0.995 ? '>99%' : p < 0.005 ? '<1%' : `${Math.round(p * 100)}%`;
+// Simulated 0%/100% isn't a mathematical lock, so it reads <0.1% / >99.9% unless the math proves it.
+const pct = (p, exact) => {
+  if (p == null) return '–';
+  if (exact) return `${Math.round(p * 100)}%`;
+  if (p >= 0.9995) return '>99.9%';
+  if (p <= 0.0005) return '<0.1%';
+  return p >= 0.98 || p <= 0.02 ? `${(p * 100).toFixed(1)}%` : `${Math.round(p * 100)}%`;
+};
+// Playoff odds text: proven clinches/eliminations beat simulated percentages.
+const oddsTxt = (odds, id) => odds.final ? pct(odds.made[id], true) : odds.clinched.has(id) ? 'Clinched' : odds.eliminated.has(id) ? 'Eliminated' : pct(odds.made[id]);
 
 const state = { chain: [], cache: {}, cur: null, tab: (location.hash || '#front').slice(1), history: null };
 
@@ -400,15 +408,17 @@ function powerAt(d, w) {
 }
 
 // ============================== SIMULATION ==============================
-// Weekly score ~ Normal(mean, sd). Mean = season average pulled 3 games' worth toward the
+// Weekly score ~ Normal(mean, sd). Mean = season average blended with SHRINK_GAMES games of the
 // league average; sd = league-wide week-to-week spread. Seeds: wins (H2H + median), then PF.
+// SHRINK_GAMES = 14 predicted playoff outcomes best when backtested on 2020-2025 (3 was overconfident).
+const SHRINK_GAMES = 14;
 function scoreModel(base, ids) {
   const all = ids.flatMap(id => base[id].weeks.map(k => k.p));
   const lg = mean(all) || 110;
   let ss = 0, n = 0;
   for (const id of ids) { const sc = base[id].weeks.map(k => k.p), m = mean(sc); sc.forEach(p => { ss += (p - m) ** 2; n++; }); }
   const sd = n > ids.length + 5 ? Math.sqrt(ss / (n - ids.length)) : 25;
-  const mu = Object.fromEntries(ids.map(id => { const sc = base[id].weeks.map(k => k.p); return [id, (sc.reduce((a, b) => a + b, 0) + 3 * lg) / (sc.length + 3)]; }));
+  const mu = Object.fromEntries(ids.map(id => { const sc = base[id].weeks.map(k => k.p); return [id, (sc.reduce((a, b) => a + b, 0) + SHRINK_GAMES * lg) / (sc.length + SHRINK_GAMES)]; }));
   return { mu, sd, lg };
 }
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
@@ -459,6 +469,16 @@ function simulate(d, upTo, N = CONFIG.sims) {
       champ[c]++;
     }
   }
+  // Proven outcomes (sound but conservative; ties count as uncertain because points-for can flip them).
+  const remGames = Object.fromEntries(ids.map(id => [id, left.reduce((n, wk) => n + (wk.pairs.some(p => p.includes(id)) ? 1 : 0) + (d.leagueAvg ? 1 : 0), 0)]));
+  const curW = Object.fromEntries(ids.map(id => [id, base[id].w + base[id].mw + base[id].t / 2]));
+  const clinched = new Set(), eliminated = new Set();
+  if (left.length) for (const x of ids) {
+    // Clinched: even losing out, fewer than `seeds` other teams can reach X's current wins.
+    if (ids.filter(y => y !== x && curW[y] + remGames[y] >= curW[x]).length <= seeds - 1) clinched.add(x);
+    // Eliminated: even winning out, at least `seeds` teams already have more wins than X can reach.
+    if (ids.filter(y => y !== x && curW[y] > curW[x] + remGames[x]).length >= seeds) eliminated.add(x);
+  }
   const per = o => Object.fromEntries(ids.map(id => [id, o[id] / sims]));
   const first = left[0];
   const cond = {}, pair = {};
@@ -466,7 +486,7 @@ function simulate(d, upTo, N = CONFIG.sims) {
     pair[x] = { opp: y, p: wonFirst[x] / sims };
     cond[x] = { win: wonFirst[x] ? madeW[x] / wonFirst[x] : null, lose: sims - wonFirst[x] ? madeL[x] / (sims - wonFirst[x]) : null };
   }
-  return { made: per(made), bye: per(bye), champ: left.length && bracketOk ? per(champ) : null, byes, seeds,
+  return { made: per(made), bye: per(bye), champ: left.length && bracketOk ? per(champ) : null, byes, seeds, clinched, eliminated,
            final: !left.length, firstWeek: first?.w ?? null, firstPairs: first?.pairs || [], pair, cond };
 }
 
@@ -641,7 +661,7 @@ function headlines(b) {
     const sw = Object.keys(d.teams).map(Number).map(id => ({ id, dp: power.odds.made[id] - power.prevOdds.made[id] })).sort((a, b) => Math.abs(b.dp) - Math.abs(a.dp))[0];
     if (sw && Math.abs(sw.dp) >= 0.1) {
       const t = d.teams[sw.id];
-      out.push({ s: 40 + Math.abs(sw.dp) * 60, k: 'Playoff race', h: `${N(sw.id)}'s playoff odds ${sw.dp > 0 ? 'climbed' : 'fell'} to ${pct(power.odds.made[sw.id])}`,
+      out.push({ s: 40 + Math.abs(sw.dp) * 60, k: 'Playoff race', h: `${N(sw.id)}'s playoff odds ${sw.dp > 0 ? 'climbed' : 'fell'} to ${oddsTxt(power.odds, sw.id)}`,
         p: `${sw.dp > 0 ? 'Up' : 'Down'} ${Math.round(Math.abs(sw.dp) * 100)} points after Week ${W}. Now ${t.totW}-${t.totL}.` });
     }
   }
@@ -697,7 +717,7 @@ function tabFront(b) {
   const odds = power.odds;
   const byOdds = [...c.list].sort((x, y) => odds.made[y.id] - odds.made[x.id] || y.totW - x.totW);
   const race = `<table class="race">${byOdds.map((t, i) => `<tr class="${i === odds.seeds - 1 ? 'cut' : ''}">
-    <td>${esc(t.name)} <span class="muted">${rec(t)}</span></td><td class="p">${pct(odds.made[t.id], odds.final)}</td><td class="b">${bar(odds.made[t.id])}</td></tr>`).join('')}</table>`;
+    <td>${esc(t.name)} <span class="muted">${rec(t)}</span></td><td class="p">${oddsTxt(odds, t.id)}</td><td class="b">${bar(odds.made[t.id])}</td></tr>`).join('')}</table>`;
   const maxChamp = odds.champ ? Math.max(...Object.values(odds.champ)) : 1;
   const titleBlock = odds.champ ? `<div class="block"><span class="label">Title odds</span><table class="race">${[...c.list].sort((x, y) => odds.champ[y.id] - odds.champ[x.id]).slice(0, 5)
     .map(t => `<tr><td>${esc(t.name)}</td><td class="p">${pct(odds.champ[t.id])}</td><td class="b">${bar(odds.champ[t.id] / maxChamp, 'gold')}</td></tr>`).join('')}</table></div>` : '';
@@ -726,7 +746,8 @@ function stakesSection(b) {
   const ptsOf = id => rows.find(r => r.roster_id === id)?.points ?? 0;
   const lev = id => (odds.cond[id]?.win ?? 0) - (odds.cond[id]?.lose ?? 0);
   const games = odds.firstPairs.map(([a, bb]) => ({ a, b: bb, lev: lev(a) + lev(bb) })).sort((x, y) => y.lev - x.lev);
-  const ifTxt = id => { const k = odds.cond[id]; if (!k || k.win == null || k.lose == null) return '';
+  const ifTxt = id => { if (odds.clinched.has(id)) return 'Playoffs: clinched'; if (odds.eliminated.has(id)) return 'Playoffs: eliminated';
+    const k = odds.cond[id]; if (!k || k.win == null || k.lose == null) return '';
     if (k.win >= 0.995 && k.lose >= 0.995) return 'Playoffs: all but locked either way';
     if (k.win < 0.005 && k.lose < 0.005) return 'Playoffs: a long shot either way';
     return `Playoffs: <b>${pct(k.win)}</b> with a win · <b>${pct(k.lose)}</b> with a loss`; };
@@ -785,7 +806,7 @@ function tabRankings(b) {
     const dTxt = Math.abs(dp) < 0.005 ? '<span class="muted">0</span>' : `<span class="${dp > 0 ? 'up' : 'down'}">${dp > 0 ? '+' : '−'}${Math.round(Math.abs(dp) * 100)}</span>`;
     return `<tr data-team="${r.id}"><td class="l"><span class="rk">${r.rank}</span>${teamCell(t)}</td><td>${move}</td>
       <td class="strong">${f1(r.score)}</td><td>${rec(t)}</td><td>${f2(r.last3)}</td>
-      <td><div class="cellbar"><span>${pct(po, odds.final)}</span>${bar(po)}</div></td>
+      <td><div class="cellbar"><span>${oddsTxt(odds, r.id)}</span>${bar(po)}</div></td>
       ${showD ? `<td>${dTxt}</td>` : ''}${odds.byes ? `<td>${pct(odds.bye[r.id], odds.final)}</td>` : ''}${odds.champ ? `<td>${pct(odds.champ[r.id])}</td>` : ''}</tr>`;
   }).join('');
   const table = `<div class="scroll"><table class="t">
@@ -793,7 +814,7 @@ function tabRankings(b) {
     ${rows}</table></div>
     <div class="note">Power blends season all-play win rate (50%), the last three weeks of all-play (25%) and actual record including median games (25%), on a 0–100 scale.
     ${odds.final ? 'The regular season is over, so playoff and bye columns show the final result.'
-      : `Odds come from ${CONFIG.sims.toLocaleString()} simulations of the remaining schedule. Each team scores around its season average, pulled toward the league average so one big week doesn't dominate. Top ${odds.seeds} by wins, then points for, make it${odds.byes ? `; the top ${odds.byes} get byes` : ''}. Title odds play out the bracket too.`}</div>`;
+      : `Odds come from ${CONFIG.sims.toLocaleString()} simulations of the remaining schedule; "Clinched" and "Eliminated" are mathematically certain. Each team scores around its season average, blended heavily with the league average, because early-season scoring predicts the rest of the season only loosely (this setting tested best on the league's 2020–2025 seasons). Top ${odds.seeds} by wins, then points for, make it${odds.byes ? `; the top ${odds.byes} get byes` : ''}. Title odds play out the bracket too.`}</div>`;
   return sec('Power rankings', `After week ${power.last}`, table) + sec('The climb', 'Power rank after each week. Hover or tap a team to follow it.', bumpChart(d, power));
 }
 
