@@ -152,6 +152,24 @@
     .gotw-tag { order: -2; }
   }
 
+  /* Playoff bracket */
+  .bracket { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 0 24px; }
+  @media (max-width: 700px) { .bracket { grid-template-columns: minmax(0, 1fr); } }
+  .bround > .label { display: block; color: var(--ink); margin: 4px 0 8px; }
+  .bround .bye { font-size: 13px; color: var(--muted); margin: -2px 0 10px; }
+  .bgame { border: 1px solid var(--hair-2); margin-bottom: 12px; }
+  .bgame.live { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .bt { display: flex; gap: 10px; align-items: center; padding: 9px 10px; font-variant-numeric: tabular-nums; }
+  .bt + .bt { border-top: 1px solid var(--hair); }
+  .bt .sd { width: 1.4em; color: var(--muted); font-size: 13px; flex: none; }
+  .bt .nm { flex: 1; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bt .sc { flex: none; font-weight: 600; }
+  .bt.won .sc::after { content: " ✓"; color: var(--up); }
+  .bt.lost { color: var(--muted); } .bt.lost .nm, .bt.lost .sc { font-weight: 400; }
+  .bt.tbd { color: var(--muted); font-style: italic; }
+  .bt.me { background: color-mix(in srgb, var(--accent) 12%, var(--paper)); }
+  .bnote { font: 600 12px/1.2 var(--cond); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 0 10px 9px; }
+
   /* Tables */
   /* Scrolling tables: shadows show there's more to the side; the team column stays put. */
   .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch;
@@ -289,7 +307,7 @@ const pct = (p, exact) => {
   return p >= 0.98 || p <= 0.02 ? `${(p * 100).toFixed(1)}%` : `${Math.round(p * 100)}%`;
 };
 // Playoff odds text: proven clinches/eliminations beat simulated percentages.
-const oddsTxt = (odds, id) => odds.final ? pct(odds.made[id], true) : odds.clinched.has(id) ? 'Clinched' : odds.eliminated.has(id) ? 'Eliminated' : pct(odds.made[id]);
+const oddsTxt = (odds, id) => odds.final ? (odds.made[id] ? 'In' : '<span class="muted">Out</span>') : odds.clinched.has(id) ? 'Clinched' : odds.eliminated.has(id) ? 'Eliminated' : pct(odds.made[id]);
 
 const TABS = ['front', 'rankings', 'standings', 'money', 'managers', 'history'];
 const tabFromHash = () => { const t = location.hash.slice(1); return TABS.includes(t) ? t : 'front'; };
@@ -330,14 +348,16 @@ async function load(leagueId, opts = {}) {
   const txUpTo = opts.light ? 0 : complete ? playoffStart + 2 : Math.max(lastScored, liveWeek || 0);
   // Sleeper projections for last week (for the week-over-week change) and every unplayed regular-season week.
   // Plus the three playoff weeks, so title odds use each round's own projections.
-  const projWeeks = complete || opts.light ? [] : [...(lastScored >= startWeek ? [lastScored] : []), ...remaining, playoffStart, playoffStart + 1, playoffStart + 2];
+  const projWeeks = complete || opts.light ? [] : [...new Set([...(lastScored >= startWeek ? [lastScored] : []), ...remaining, playoffStart, playoffStart + 1, playoffStart + 2])];
+  // The bracket matters once the regular season is over (and for finished seasons, to name the champion).
+  const postseason = lastScored >= playoffStart - 1;
   // A failed request falls back to empty data so the page still renders, but it's counted and shown as a warning.
   let failed = 0;
   const soft = (p, fallback) => p.catch(e => { failed++; console.warn(e); return fallback; });
   const [matchups, txs, bracket, projs, games] = await Promise.all([
     Promise.all(fetchWeeks.map(w => soft(get(`/league/${leagueId}/matchups/${w}`), []))),
     Promise.all(range(1, txUpTo).map(w => soft(get(`/league/${leagueId}/transactions/${w}`), []))),
-    complete ? soft(get(`/league/${leagueId}/winners_bracket`), []) : Promise.resolve([]),
+    complete || (postseason && !opts.light) ? soft(get(`/league/${leagueId}/winners_bracket`), []) : Promise.resolve([]),
     Promise.all(projWeeks.map(w => soft(get(`/projections/nfl/regular/${league.season}/${w}`), null))),
     liveWeek ? nflGames(league.season, liveWeek) : Promise.resolve(null),
   ]);
@@ -345,6 +365,8 @@ async function load(leagueId, opts = {}) {
   projWeeks.forEach((w, i) => { if (projs[i] && Object.keys(projs[i]).length) proj[w] = projs[i]; });
   const rosterPlayers = Object.fromEntries(rosters.map(r => [r.roster_id, r.players || []]));
   const byWeek = Object.fromEntries(fetchWeeks.map((w, i) => [w, matchups[i] || []]));
+  // A commissioner's score override replaces the computed score, as it does in Sleeper.
+  for (const rows of Object.values(byWeek)) for (const r of rows) if (r.custom_points != null) r.points = r.custom_points;
   const userById = Object.fromEntries(users.map(u => [u.user_id, u]));
   const teams = {};
   for (const r of rosters) {
@@ -361,6 +383,7 @@ async function load(leagueId, opts = {}) {
     league, teams, weeks, remaining, byWeek, liveWeek, playoffStart, complete, nfl, proj, games, rosterPlayers,
     leagueAvg: !!s.league_average_match, transactions: txs.flat().filter(t => t && t.status === 'complete'),
     champion: final?.w ?? null, runnerUp: final?.l ?? null, failed,
+    bracket: postseason && bracket?.length ? bracket : null,
   };
 }
 // NFL team -> 'pre_game' | 'in_game' | 'complete' for one week, or null if the schedule is unavailable.
@@ -661,9 +684,61 @@ function computePower(d) {
   const live = d.liveWeek && d.liveWeek === odds.firstWeek && regRows(d, d.liveWeek).some(r => r.points > 0);
   // The pre-kickoff and last-week runs only feed ordering and week-over-week changes, so half the simulations is plenty.
   const half = Math.round(CONFIG.sims / 2);
-  return { history, last, odds, preKick: live ? simulate(d, last, half, { frozen: true }) : odds,
+  // After the regular season, title odds come from playing out what's left of the real bracket.
+  const playoffs = d.bracket ? simBracket(d) : null;
+  if (playoffs) odds.champ = playoffs.champ;
+  return { history, last, odds, playoffs, preKick: live ? simulate(d, last, half, { frozen: true }) : odds,
            prevOdds: done.length > 1 ? simulate(d, done[done.length - 2], half) : null };
 }
+
+// ============================== PLAYOFFS ==============================
+// Sleeper's winners bracket: each match has a round r, teams t1/t2 (or t1_from/t2_from: the winner or loser of an
+// earlier match), and w/l once decided. Placement games (p = 3, 5) are for teams already out of the title race.
+const titlePath = m => m.p == null || m.p === 1;
+const roundName = (d, r) => { const last = Math.max(...d.bracket.map(m => m.r)); return r === last ? 'Championship' : r === last - 1 ? 'Semifinals' : `Round ${r}`; };
+const roundWeek = (d, r) => d.playoffStart + r - 1;
+// Teams that can no longer win the title: never made the bracket, or lost a title-path game.
+function playoffOut(d) {
+  const inB = new Set(d.bracket.flatMap(m => [m.t1, m.t2]).filter(x => x != null));
+  const out = new Set(Object.keys(d.teams).map(Number).filter(id => !inB.has(id)));
+  for (const m of d.bracket) if (titlePath(m) && m.l != null) out.add(m.l);
+  return out;
+}
+function simBracket(d, N = CONFIG.sims) {
+  const ids = Object.keys(d.teams).map(Number);
+  const { mu: avg } = scoreModel(tally(d, d.playoffStart - 1), ids);
+  const upTo = d.weeks.at(-1) ?? 0, rounds = Math.max(...d.bracket.map(m => m.r));
+  const flat = { mu: avg, sd: Object.fromEntries(ids.map(id => [id, WEEKLY_SD])) };
+  const models = range(1, rounds).map(r => weekModel(d, roundWeek(d, r), upTo, { avg }) || flat);
+  const rand = rng(20261215 + upTo * 7919);
+  const gauss = () => { let u = 0; while (!u) u = rand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand()); };
+  const off = Object.fromEntries(ids.map(id => [id, 0]));
+  const draw = (id, m) => m.mu[id] + off[id] * (m.frac?.[id] ?? 1) + m.sd[id] * gauss();
+  const order = [...d.bracket].sort((a, b) => a.r - b.r || a.m - b.m);
+  const champ = Object.fromEntries(ids.map(id => [id, 0])), t1Wins = {}, seen = {};
+  for (let s = 0; s < N; s++) {
+    for (const id of ids) off[id] = TEAM_SD * gauss();
+    const W = {}, L = {}, from = f => f ? (f.w != null ? W[f.w] : L[f.l]) : null;
+    for (const m of order) {
+      const a = m.t1 ?? from(m.t1_from), b = m.t2 ?? from(m.t2_from);
+      if (a == null || b == null) continue;
+      const mod = models[m.r - 1], w = m.w ?? (draw(a, mod) > draw(b, mod) ? a : b);
+      W[m.m] = w; L[m.m] = w === a ? b : a;
+      if (m.p === 1) champ[w]++;
+      if (m.t1 != null && m.t2 != null) { seen[m.m] = (seen[m.m] || 0) + 1; t1Wins[m.m] = (t1Wins[m.m] || 0) + (w === a ? 1 : 0); }
+    }
+  }
+  const final = d.bracket.find(m => m.p === 1);
+  return { champ: Object.fromEntries(ids.map(id => [id, champ[id] / N])), out: playoffOut(d), done: final?.w != null,
+           champion: final?.w ?? null, match: Object.fromEntries(Object.keys(seen).map(k => [k, t1Wins[k] / seen[k]])), models };
+}
+// Title odds text: a decided bracket or a knocked-out team reads plainly instead of as a percentage.
+const champTxt = (odds, power, id) => {
+  const ps = power?.playoffs;
+  if (ps?.done) return id === ps.champion ? '<span class="money" title="Champion">★</span>' : '<span class="muted">–</span>';
+  if (ps?.out.has(id)) return 'Out';
+  return pct(odds.champ[id]);
+};
 function preWeekProb(d, w, a, b) {
   const ids = Object.keys(d.teams).map(Number);
   const m = scoreModel(tally(d, w - 1), ids);
@@ -783,6 +858,25 @@ function headlines(b) {
     out.push({ s: 1000, k: 'Champions', h: `${N(d.champion)} won the ${esc(d.league.season)} title`, p: `The season is in the books.${ru}` });
   }
   if (!power) return out;
+  const rich = [...c.list].sort((a, b) => b.winnings - a.winnings)[0];
+  const money = () => { if (rich && rich.highs >= 2) out.push({ s: 22 + rich.highs * 3, k: 'The money', h: `${N(rich.id)} has banked ${usd(rich.winnings)} in weekly high scores`,
+    p: `${rich.highs} weekly wins so far. Nobody else has more than ${Math.max(0, ...c.list.filter(t => t !== rich).map(t => t.highs))}.` }); };
+  // Playoff weeks: the stories are the bracket results, and last regular-season week's news is stale.
+  const lastWk = d.weeks.at(-1) ?? 0;
+  if (d.bracket && lastWk >= d.playoffStart) {
+    const r = lastWk - d.playoffStart + 1, rounds = Math.max(...d.bracket.map(m => m.r));
+    const rows = regRows(d, lastWk), pts = id => rows.find(x => x.roster_id === id)?.points ?? 0;
+    const seed = id => c.list.findIndex(t => t.id === id) + 1;
+    for (const m of d.bracket.filter(m => m.r === r && titlePath(m) && m.w != null)) {
+      if (m.p === 1 && d.champion != null) continue;  // the champions story above covers it
+      const up = seed(m.w) > seed(m.l);
+      out.push({ s: 500 + (up ? 20 : 0) + (m.p === 1 ? 100 : 0), k: m.p === 1 ? 'Champions' : up ? 'Playoff upset' : roundName(d, r),
+        h: m.p === 1 ? `${N(m.w)} won the ${esc(d.league.season)} title` : `${N(m.w)} ${up ? 'knocked out' : 'beat'} ${N(m.l)}${r < rounds ? ` to reach the ${roundName(d, r + 1).toLowerCase()}` : ''}`,
+        p: `${f2(pts(m.w))}–${f2(pts(m.l))}. ${N(m.w)} was the No. ${seed(m.w)} seed${up ? ` and ${N(m.l)} the No. ${seed(m.l)}` : ''}.` });
+    }
+    money();
+    return out.sort((a, b) => b.s - a.s);
+  }
   const W = power.last;
   const games = c.games.filter(g => g.week === W);
   const rows = regRows(d, W);
@@ -832,9 +926,7 @@ function headlines(b) {
     const mv = cur.map(r => ({ r, m: (prev.find(z => z.id === r.id)?.rank ?? r.rank) - r.rank })).sort((a, b) => b.m - a.m)[0];
     if (mv && mv.m >= 3) out.push({ s: 30 + mv.m * 3, k: 'Power rankings', h: `${N(mv.r.id)} jumped ${mv.m} spots to No. ${mv.r.rank}`, p: `Power score: ${f1(mv.r.score)}.` });
   }
-  const rich = [...c.list].sort((a, b) => b.winnings - a.winnings)[0];
-  if (rich && rich.highs >= 2) out.push({ s: 22 + rich.highs * 3, k: 'The money', h: `${N(rich.id)} has banked ${usd(rich.winnings)} in weekly high scores`,
-    p: `${rich.highs} weekly wins so far. Nobody else has more than ${Math.max(0, ...c.list.filter(t => t !== rich).map(t => t.highs))}.` });
+  money();
   return out.sort((a, b) => b.s - a.s);
 }
 
@@ -891,22 +983,70 @@ function tabFront(b) {
   const byOdds = [...c.list].sort((x, y) => odds.made[y.id] - odds.made[x.id] || y.totW - x.totW);
   const race = `<table class="race">${byOdds.map((t, i) => `<tr data-tid="${t.id}" class="${i === odds.seeds - 1 ? 'cut' : ''}">
     <td>${esc(t.name)} <span class="muted">${rec(t)}</span></td><td class="p">${oddsTxt(odds, t.id)}</td><td class="b">${bar(odds.made[t.id])}</td></tr>`).join('')}</table>`;
+  const ps = power.playoffs;
   const maxChamp = odds.champ ? Math.max(...Object.values(odds.champ)) : 1;
-  const titleBlock = odds.champ ? `<div class="block"><span class="label">Title odds</span><table class="race">${[...c.list].sort((x, y) => odds.champ[y.id] - odds.champ[x.id]).slice(0, 5)
-    .map(t => `<tr data-tid="${t.id}"><td>${esc(t.name)}</td><td class="p">${pct(odds.champ[t.id])}</td><td class="b">${bar(odds.champ[t.id] / maxChamp, 'gold')}</td></tr>`).join('')}</table></div>` : '';
-  const front = `${myTeamCard(b)}<div class="cols">
+  const contenders = odds.champ ? [...c.list].filter(t => !ps?.out.has(t.id)).sort((x, y) => odds.champ[y.id] - odds.champ[x.id]).slice(0, 5) : [];
+  const titleBlock = odds.champ && !ps?.done ? `<div class="block"><span class="label">Title odds</span><table class="race">${contenders
+    .map(t => `<tr data-tid="${t.id}"><td>${esc(t.name)}</td><td class="p">${champTxt(odds, power, t.id)}</td><td class="b">${bar(odds.champ[t.id] / maxChamp, 'gold')}</td></tr>`).join('')}</table></div>` : '';
+  const lastWk = d.weeks.at(-1) ?? 0, reviewWk = ps && lastWk >= d.playoffStart ? lastWk : power.last;
+  const front = `${myTeamCard(b)}${ps ? bracketSection(b) : ''}<div class="cols">
     <div>
       ${lead ? `<article class="lead"><div class="kicker">${lead.k}</div><h3>${lead.h}</h3><p class="dek">${lead.p}</p>
-        <div class="byline">Week ${power.last} in review</div></article>` : ''}
+        <div class="byline">Week ${reviewWk} in review</div></article>` : ''}
       <div class="briefs">${rest.slice(0, 6).map(x => `<div class="brief"><div class="kicker">${x.k}</div><h4>${x.h}</h4><p>${x.p}</p></div>`).join('')}</div>
     </div>
     <aside class="side">
       <div class="block"><span class="label">The playoff race</span>${race}
-        <div class="note">${odds.final ? 'Final regular-season seeding.' : `Top ${odds.seeds} make it. Odds are on the <a href="#rankings">Rankings</a> tab.`}</div></div>
+        <div class="note">${odds.final ? `Final regular-season standings. The top ${odds.seeds} made the playoffs.` : `Top ${odds.seeds} make it. Odds are on the <a href="#rankings">Rankings</a> tab.`}</div></div>
       ${titleBlock}
     </aside>
   </div>`;
-  return front + stakesSection(b) + superlatives(b);
+  return front + (ps ? '' : stakesSection(b)) + superlatives(b);
+}
+
+// Title-path games with their teams, scores and state, for the bracket and the My team card.
+function bracketGames(b) {
+  const { d, power } = b, ps = power?.playoffs;
+  if (!d.bracket) return [];
+  const byM = Object.fromEntries(d.bracket.map(m => [m.m, m]));
+  const teamsOf = m => [m.t1 ?? fromTeam(m.t1_from), m.t2 ?? fromTeam(m.t2_from)];
+  const fromTeam = f => { const m = f && byM[f.w ?? f.l]; return !m ? null : f.w != null ? m.w : m.l; };
+  const lastWk = d.weeks.at(-1) ?? 0;
+  return d.bracket.filter(titlePath).sort((x, y) => x.r - y.r || x.m - y.m).map(m => {
+    const wk = roundWeek(d, m.r), rows = regRows(d, wk), [a, bb] = teamsOf(m);
+    const pts = id => rows.find(r => r.roster_id === id)?.points ?? 0;
+    const live = m.w == null && wk === d.liveWeek && rows.some(r => r.points > 0);
+    const src = f => { const s2 = f && byM[f.w ?? f.l]; return s2 ? { won: f.w != null, teams: teamsOf(s2) } : null; };
+    return { m, r: m.r, wk, a, b: bb, from: [src(m.t1_from), src(m.t2_from)], w: m.w, live,
+             scores: a != null && bb != null && (wk <= lastWk || live) ? [pts(a), pts(bb)] : null,
+             p: a != null && bb != null && m.w == null ? ps?.match[m.m] ?? null : null };
+  });
+}
+
+function bracketSection(b) {
+  const { d, c, power } = b, ps = power.playoffs, games = bracketGames(b);
+  if (!games.length) return '';
+  const seed = id => c.list.findIndex(t => t.id === id) + 1;
+  const name = id => esc(d.teams[id]?.name ?? 'TBD');
+  const fromLabel = f => { if (!f) return 'TBD';
+    const known = f.teams.filter(id => id != null), who = f.won ? 'Winner' : 'Loser';
+    return known.length === 2 ? `${who} of ${name(known[0])} / ${name(known[1])}` : known.length ? `${who} of ${name(known[0])}'s game` : `${who} of an earlier game`; };
+  const side = (g, i) => {
+    const id = i ? g.b : g.a;
+    if (id == null) return `<div class="bt tbd">${fromLabel(g.from[i])}</div>`;
+    const val = g.scores ? f2(g.scores[i]) : g.p != null ? pct(i ? 1 - g.p : g.p) : '';
+    return `<div class="bt ${g.w === id ? 'won' : g.w != null ? 'lost' : ''}" data-tid="${id}"><span class="sd">${seed(id)}</span><span class="nm">${name(id)}</span><span class="sc">${val}</span></div>`;
+  };
+  const rounds = [...new Set(games.map(g => g.r))];
+  const r1 = new Set(games.filter(g => g.r === rounds[0]).flatMap(g => [g.a, g.b]));
+  const byes = games.filter(g => g.r === rounds[1]).flatMap(g => [g.a, g.b]).filter(id => id != null && !r1.has(id));
+  const cols = rounds.map(r => `<div class="bround"><span class="label">${roundName(d, r)} · Week ${roundWeek(d, r)}</span>
+    ${r === rounds[0] && byes.length ? `<div class="bye">First-round bye: ${byes.map(id => `${seed(id)} ${name(id)}`).join(', ')}</div>` : ''}
+    ${games.filter(g => g.r === r).map(g => `<div class="bgame ${g.live ? 'live' : ''}">${side(g, 0)}${side(g, 1)}
+      ${g.live && g.p != null ? `<div class="bnote">Live · win chance ${pct(g.p)} – ${pct(1 - g.p)}</div>` : !g.scores && g.p != null ? '<div class="bnote">Win chance</div>' : ''}</div>`).join('')}</div>`).join('');
+  const dek = ps.done ? `${name(ps.champion)} won the title.` : 'Seeds are on the left. Numbers are final scores, live scores or win chances.';
+  return sec('The playoffs', dek, `<div class="bracket" style="--n:${rounds.length}">${cols}</div>`
+    + (ps.done ? '' : how('bracket', `Win chances come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the bracket, using each team's projected lineup for that week${d.liveWeek ? ' and, for games under way, the points already scored' : ''}. Title odds on the right and on the Rankings tab come from the same simulations.`)));
 }
 
 // A short card for the viewer's own team, picked with "My team" in the header.
@@ -917,12 +1057,22 @@ function myTeamCard(b) {
   const odds = power.odds, place = c.list.indexOf(t) + 1;
   const stat = (k, v, s = '') => `<div class="stat"><div class="label">${k}</div><div class="v">${v}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`;
   const items = [stat('Record', rec(t), `${ord(place)} place`)];
-  if (!odds.final) {
+  if (power.playoffs) {
+    const ps = power.playoffs, made = place <= odds.seeds;
+    items.push(stat('Playoffs', made ? `${ord(place)} seed` : 'Missed', made && ps.out.has(t.id) && !ps.done ? 'Eliminated' : ''));
+    if (made) items.push(stat('Title', champTxt(odds, power, t.id)));
+    const g = bracketGames(b).filter(x => x.a === t.id || x.b === t.id).at(-1);
+    if (g && g.w == null) {
+      const i = g.a === t.id ? 0 : 1, opp = i ? g.a : g.b, mp = g.p == null ? null : i ? 1 - g.p : g.p;
+      items.push(stat(roundName(d, g.r), g.scores ? `${f2(g.scores[i])}–${f2(g.scores[1 - i])}` : mp != null ? `${pct(mp)} to win` : 'Waiting',
+        opp != null ? `vs ${esc(d.teams[opp].name)}${g.scores && mp != null ? ` · ${pct(mp)} to win` : ''}` : `Week ${g.wk}`));
+    }
+  } else if (!odds.final) {
     const dp = power.prevOdds ? odds.made[t.id] - power.prevOdds.made[t.id] : 0;
     items.push(stat('Playoffs', oddsTxt(odds, t.id), Math.abs(dp) >= 0.005 ? `${dp > 0 ? 'Up' : 'Down'} ${Math.round(Math.abs(dp) * 100)} since last week` : ''));
-    if (odds.champ) items.push(stat('Title', pct(odds.champ[t.id])));
+    if (odds.champ) items.push(stat('Title', champTxt(odds, power, t.id)));
   }
-  const pair = odds.pair[t.id];
+  const pair = power.playoffs ? null : odds.pair[t.id];
   if (pair) {
     const rows = regRows(d, odds.firstWeek), pts = id => rows.find(r => r.roster_id === id)?.points ?? 0;
     const live = d.liveWeek === odds.firstWeek && (pts(t.id) > 0 || pts(pair.opp) > 0), m = odds.firstModel;
@@ -1022,12 +1172,12 @@ function tabRankings(b) {
     return `<tr data-team="${r.id}" data-tid="${r.id}" tabindex="0"><td class="l"><span class="rk">${r.rank}</span>${teamCell(t)}</td><td class="opt">${move}</td>
       <td class="strong opt">${f1(r.score)}</td><td>${rec(t)}</td><td class="opt">${f2(r.last3)}</td>
       <td><div class="cellbar"><span>${oddsTxt(odds, r.id)}</span>${bar(po)}</div></td>
-      ${showD ? `<td class="opt">${dTxt}</td>` : ''}${odds.byes ? `<td class="opt">${pct(odds.bye[r.id], odds.final)}</td>` : ''}${odds.champ ? `<td>${pct(odds.champ[r.id])}</td>` : ''}</tr>`;
+      ${showD ? `<td class="opt">${dTxt}</td>` : ''}${odds.byes ? `<td class="opt">${odds.final ? (odds.bye[r.id] ? 'Yes' : '<span class="muted">–</span>') : pct(odds.bye[r.id])}</td>` : ''}${odds.champ ? `<td>${champTxt(odds, power, r.id)}</td>` : ''}</tr>`;
   }).join('');
   const table = `<div class="scroll"><table class="t">
-    <tr><th class="l">Team</th><th class="opt">Move</th><th class="opt">Power</th><th>Record</th><th class="opt">Last 3 avg</th><th>Playoffs</th>${showD ? '<th class="opt" title="Change in playoff odds since last week, in percentage points">Change</th>' : ''}${odds.byes ? '<th class="opt">Bye</th>' : ''}${odds.champ ? '<th>Title</th>' : ''}</tr>
-    ${rows}</table></div>
-    <div class="note">${odds.final ? 'The regular season is over, so the playoff and bye columns show the final result.'
+    <thead><tr><th scope="col" class="l">Team</th><th scope="col" class="opt">Move</th><th scope="col" class="opt">Power</th><th scope="col">Record</th><th scope="col" class="opt">Last 3 avg</th><th scope="col">Playoffs</th>${showD ? '<th scope="col" class="opt" title="Change in playoff odds since last week, in percentage points">Change</th>' : ''}${odds.byes ? '<th scope="col" class="opt">Bye</th>' : ''}${odds.champ ? '<th scope="col">Title</th>' : ''}</tr></thead><tbody>
+    ${rows}</tbody></table></div>
+    <div class="note">${odds.final ? `The regular season is over, so the playoff and bye columns show the final result.${power.playoffs && !power.playoffs.done ? ' Title odds play out the rest of the bracket.' : ''}`
       : `Playoff odds come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the season. The top ${odds.seeds} make it${odds.byes ? ` and the top ${odds.byes} get a first-round bye` : ''}.`}</div>`
     + how('rankings',
       `Power is a 0–100 score: season all-play win rate (50%), the last three weeks of all-play (25%) and actual record including median games (25%). All-play is your record if you'd played every team every week.`,
@@ -1095,12 +1245,12 @@ function tabStandings(b) {
   const { d, c, sw } = b;
   const seeds = d.league.settings.playoff_teams || 6;
   const standings = `<div class="scroll"><table class="t">
-    <tr><th class="l">Team</th><th>Record</th>${d.leagueAvg ? '<th>H2H</th><th>vs Median</th>' : ''}<th>PF</th><th>PA</th><th title="Record if you played every team every week">All-play</th><th title="Head-to-head wins compared with what your all-play rate predicts">Luck</th></tr>
+    <thead><tr><th scope="col" class="l">Team</th><th scope="col">Record</th>${d.leagueAvg ? '<th scope="col">H2H</th><th scope="col">vs Median</th>' : ''}<th scope="col">PF</th><th scope="col">PA</th><th scope="col" title="Record if you played every team every week">All-play</th><th scope="col" title="Head-to-head wins compared with what your all-play rate predicts">Luck</th></tr></thead><tbody>
     ${c.list.map((t, i) => `<tr data-tid="${t.id}" class="${i === seeds - 1 ? 'cut' : ''}"><td class="l"><span class="rk">${i + 1}</span>${teamCell(t)}</td>
       <td class="strong">${rec(t)}${t.t ? '-' + t.t : ''}</td>${d.leagueAvg ? `<td>${t.w}-${t.l}${t.t ? '-' + t.t : ''}</td><td>${t.mw}-${t.ml}</td>` : ''}
       <td>${f2(t.pf)}</td><td>${f2(t.pa)}</td><td>${t.apW}-${t.apL}</td>
       <td class="${t.luck > 0.5 ? 'up' : t.luck < -0.5 ? 'down' : 'muted'}">${t.luck >= 0 ? '+' : ''}${f1(t.luck)}</td></tr>`).join('')}
-  </table></div><div class="note">The heavy line is the playoff cut (top ${seeds}).</div>`
+  </tbody></table></div><div class="note">The heavy line is the playoff cut (top ${seeds}).</div>`
     + how('standings',
       `Sorted by total wins${d.leagueAvg ? ' (head-to-head plus median games)' : ''}, then points for. Sleeper's own tiebreakers may order tied teams differently.`,
       d.leagueAvg && '"vs Median" is the second weekly game: a top-half score that week is a win.',
@@ -1110,19 +1260,19 @@ function tabStandings(b) {
   const maxW = Math.max(1, ...ids.flatMap(a => ids.map(bb => sw[a][bb].w)));
   const avgSwap = id => mean(ids.map(bb => sw[id][bb].w));
   const swap = c.games.length ? `<div class="scroll"><table class="t mx">
-    <tr><th class="l">Team ↓ &nbsp; with schedule of →</th>${ids.map(id => `<th class="vert">${esc(d.teams[id].name)}</th>`).join('')}<th>Avg W</th></tr>
+    <thead><tr><th scope="col" class="l">Team ↓ &nbsp; with schedule of →</th>${ids.map(id => `<th scope="col" class="vert">${esc(d.teams[id].name)}</th>`).join('')}<th scope="col">Avg W</th></tr></thead><tbody>
     ${ids.map(a => `<tr data-tid="${a}"><td class="l">${esc(d.teams[a].name)}</td>${ids.map(bb => { const v = sw[a][bb];
       return `<td class="${a === bb ? 'self' : ''}" style="background:color-mix(in srgb, var(--accent) ${Math.round(v.w / maxW * 42)}%, transparent)" title="${esc(d.teams[a].name)} with ${esc(d.teams[bb].name)}'s schedule: ${v.w}-${v.l}">${v.w}-${v.l}</td>`; }).join('')}
       <td>${f1(avgSwap(a))}</td></tr>`).join('')}
-  </table></div><div class="note">Each row is a team's head-to-head record if it had played the column team's schedule. Outlined cells are the real schedule. Median games don't depend on the schedule, so they're left out.</div>` : '';
+  </tbody></table></div><div class="note">Each row is a team's head-to-head record if it had played the column team's schedule. Outlined cells are the real schedule. Median games don't depend on the schedule, so they're left out.</div>` : '';
 
   const weeks = d.weeks.filter(w => c.weekStats[w]);
   const grid = `<div class="scroll"><table class="t">
-    <tr><th class="l">Team</th>${weeks.map(w => `<th>W${w}</th>`).join('')}<th>Avg</th></tr>
+    <thead><tr><th scope="col" class="l">Team</th>${weeks.map(w => `<th scope="col">W${w}</th>`).join('')}<th scope="col">Avg</th></tr></thead><tbody>
     ${c.list.map(t => { const vals = weeks.filter(w => w < d.playoffStart).map(w => t.scores[w]).filter(v => v != null);
       return `<tr data-tid="${t.id}"><td class="l">${esc(t.name)}</td>${weeks.map(w => { const v = t.scores[w], st = c.weekStats[w];
         return v == null ? '<td class="muted">–</td>' : `<td class="${v === st.hi ? 'hi' : v === st.lo ? 'lo' : ''}">${f2(v)}</td>`; }).join('')}<td class="strong">${f2(mean(vals))}</td></tr>`; }).join('')}
-  </table></div><div class="note"><span class="money">Gold ▲</span> weekly high · <span class="down">red</span> weekly low.</div>`;
+  </tbody></table></div><div class="note"><span class="money">Gold ▲</span> weekly high · <span class="down">red</span> weekly low.</div>`;
 
   return sec('Standings', 'Regular season', standings) + (swap ? sec('Schedule swap', 'What if you\'d had someone else\'s schedule?', swap) : '') + sec('Every score', '', grid);
 }
@@ -1134,18 +1284,18 @@ function tabMoney(b) {
   const paid = c.payouts.length * CONFIG.highScorePayout;
   const totalWeeks = (d.playoffStart - (d.league.settings.start_week || 1)) + (CONFIG.payPlayoffWeeks ? 3 : 0);
   const table = `<div class="scroll"><table class="t">
-    <tr><th class="l">Team</th><th>Weekly wins</th><th class="l opt" style="width:30%"></th><th>Paid</th></tr>
+    <thead><tr><th scope="col" class="l">Team</th><th scope="col">Weekly wins</th><th scope="col" class="l opt" style="width:30%"></th><th scope="col">Paid</th></tr></thead><tbody>
     ${earners.map(t => `<tr data-tid="${t.id}"><td class="l">${teamCell(t, false)}</td><td>${t.highs || '<span class="muted">0</span>'}</td><td class="l opt">${bar(t.winnings / maxWin, 'gold')}</td>
       <td class="${t.winnings ? 'money' : 'muted'}">${usd(t.winnings)}</td></tr>`).join('')}
-  </table></div><div class="note">${usd(paid)} paid of ${usd(totalWeeks * CONFIG.highScorePayout)} this season (${usd(CONFIG.highScorePayout)} a week${CONFIG.splitTies ? ', ties split' : ''}${CONFIG.payPlayoffWeeks ? ', playoffs included' : ', regular season only'}).</div>`;
+  </tbody></table></div><div class="note">${usd(paid)} paid of ${usd(totalWeeks * CONFIG.highScorePayout)} this season (${usd(CONFIG.highScorePayout)} a week${CONFIG.splitTies ? ', ties split' : ''}${CONFIG.payPlayoffWeeks ? ', playoffs included' : ', regular season only'}).</div>`;
   const liveRows = d.liveWeek ? regRows(d, d.liveWeek) : [];
   const leader = liveRows.length ? liveRows.reduce((x, y) => y.points > x.points ? y : x) : null;
   const log = `<div class="scroll"><table class="t">
-    <tr><th class="l">Week</th><th class="l">Top score</th><th>Points</th><th>Paid</th></tr>
+    <thead><tr><th scope="col" class="l">Week</th><th scope="col" class="l">Top score</th><th scope="col">Points</th><th scope="col">Paid</th></tr></thead><tbody>
     ${leader && leader.points > 0 ? `<tr><td class="l">${d.liveWeek} <span class="muted">(live)</span></td><td class="l">${teamCell(d.teams[leader.roster_id], false)}</td><td>${f2(leader.points)}</td><td class="muted">leading</td></tr>` : ''}
     ${[...c.payouts].reverse().map(p => `<tr><td class="l">${p.week}</td><td class="l">${p.winners.map(id => teamCell(d.teams[id], false)).join(' ')}</td><td>${f2(p.score)}</td><td class="money">${usd(p.each)}${p.winners.length > 1 ? ' each' : ''}</td></tr>`).join('')
       || '<tr><td colspan="4" class="l muted">No completed weeks yet.</td></tr>'}
-  </table></div>`;
+  </tbody></table></div>`;
   return `<div class="cols even"><div>${sec('High-score money', 'Season to date', table)}</div><div>${sec('Week by week', '', log)}</div></div>`;
 }
 
@@ -1157,33 +1307,33 @@ function tabManagers(b) {
     const rows = Object.entries(lu.per).filter(([, x]) => x.weeks).sort((x, y) => y[1].eff - x[1].eff);
     const minEff = Math.min(...rows.map(([, x]) => x.eff));
     html += sec('Lineup IQ', 'How close each manager came to starting their best possible lineup', `<div class="scroll"><table class="t">
-      <tr><th class="l">Team</th><th>Lineup accuracy</th><th>Points benched</th><th title="Losses where the best possible lineup would have won">Lost with a better lineup</th><th class="opt" title="Weeks with the best possible lineup">Perfect weeks</th><th class="l opt">Worst week</th></tr>
+      <thead><tr><th scope="col" class="l">Team</th><th scope="col">Lineup accuracy</th><th scope="col">Points benched</th><th scope="col" title="Losses where the best possible lineup would have won">Lost with a better lineup</th><th scope="col" class="opt" title="Weeks with the best possible lineup">Perfect weeks</th><th scope="col" class="l opt">Worst week</th></tr></thead><tbody>
       ${rows.map(([id, x], i) => `<tr data-tid="${id}"><td class="l"><span class="rk">${i + 1}</span>${teamCell(T(id), false)}</td>
         <td><div class="cellbar"><span class="strong">${(x.eff * 100).toFixed(1)}%</span>${bar((x.eff - minEff + 0.02) / (1 - minEff + 0.02))}</div></td>
         <td>${f1(x.opt - x.act)}</td><td class="${x.blown ? 'down strong' : 'muted'}">${x.blown}</td><td class="opt">${x.perfect}</td>
         <td class="l muted opt">${x.worst && x.worst.left > 0 ? `Week ${x.worst.w}, ${f1(x.worst.left)} benched` : '–'}</td></tr>`).join('')}
-    </table></div>` + how('lineups', 'Lineup accuracy is the share of your best possible points you actually started. The best possible lineup is the highest-scoring legal lineup from that week\'s roster, worked out after the fact, so nobody hits 100% every week.'));
+    </tbody></table></div>` + how('lineups', 'Lineup accuracy is the share of your best possible points you actually started. The best possible lineup is the highest-scoring legal lineup from that week\'s roster, worked out after the fact, so nobody hits 100% every week.'));
     if (lu.blunders.length) html += `<div class="sub-h">Losses that were sitting on the bench</div><div class="scroll"><table class="t">
-      <tr><th class="l">Team</th><th>Benched</th><th>Week</th><th>Score</th><th>Best possible</th><th class="l">Lost to</th></tr>
+      <thead><tr><th scope="col" class="l">Team</th><th scope="col">Benched</th><th scope="col">Week</th><th scope="col">Score</th><th scope="col">Best possible</th><th scope="col" class="l">Lost to</th></tr></thead><tbody>
       ${lu.blunders.slice(0, 8).map(x => `<tr data-tid="${x.id}"><td class="l">${esc(T(x.id).name)}</td><td class="down strong">${f1(x.left)}</td><td>${x.w}</td>
         <td>${f2(x.act)}–${f2(x.oppPts)}</td><td>${f2(x.opt)}</td><td class="l">${esc(T(x.opp).name)}</td></tr>`).join('')}
-    </table></div>`;
+    </tbody></table></div>`;
   } else html += sec('Lineup IQ', '', '<p class="muted">Couldn\'t load the NFL player list, so lineup stats are unavailable right now.</p>');
 
   const teams = Object.entries(mv.perTeam).sort((x, y) => y[1].pts - x[1].pts);
   const maxPts = Math.max(1, ...teams.map(([, x]) => x.pts));
   html += sec('The waiver wire', 'Pickups judged by points actually started for the team that added them', `<div class="scroll"><table class="t">
-    <tr><th class="l">Team</th><th>Points started</th><th>Adds</th>${mv.faabBudget ? '<th>FAAB spent</th>' : ''}<th class="l">Best pickup</th></tr>
+    <thead><tr><th scope="col" class="l">Team</th><th scope="col">Points started</th><th scope="col">Adds</th>${mv.faabBudget ? '<th scope="col">FAAB spent</th>' : ''}<th scope="col" class="l">Best pickup</th></tr></thead><tbody>
     ${teams.map(([id, x]) => `<tr data-tid="${id}"><td class="l">${teamCell(T(id), false)}</td>
       <td><div class="cellbar"><span class="strong">${f1(x.pts)}</span>${bar(x.pts / maxPts)}</div></td><td>${x.adds}</td>
       ${mv.faabBudget ? `<td>${usd(x.faab)} <span class="muted">of ${usd(mv.faabBudget)}</span></td>` : ''}
       <td class="l">${x.best && x.best.pts > 0 ? `${esc(x.best.name)} <span class="muted">${f1(x.best.pts)}</span>` : '<span class="muted">–</span>'}</td></tr>`).join('')}
-  </table></div>
+  </tbody></table></div>
   <div class="sub-h">Best pickups of the season</div><div class="scroll"><table class="t">
-    <tr><th class="l">Player</th><th>Points started</th><th class="l">Added by</th><th>Week</th><th>Cost</th></tr>
+    <thead><tr><th scope="col" class="l">Player</th><th scope="col">Points started</th><th scope="col" class="l">Added by</th><th scope="col">Week</th><th scope="col">Cost</th></tr></thead><tbody>
     ${mv.pickups.slice(0, 10).map(p => `<tr data-tid="${p.rid}"><td class="l"><b>${esc(p.name)}</b> <span class="muted">${esc(p.meta)}</span></td><td class="strong">${f1(p.pts)}</td><td class="l">${esc(T(p.rid).name)}</td>
       <td>${p.w}</td><td>${p.bid == null ? '<span class="muted">Free agent</span>' : `${usd(p.bid)} bid`}</td></tr>`).join('') || '<tr><td colspan="5" class="l muted">No pickups yet.</td></tr>'}
-  </table></div>`);
+  </tbody></table></div>`);
 
   html += sec('The trade desk', 'Every trade, scored by points each side has started since', mv.trades.length ? mv.trades.map(t => `<div class="trade">
     <div><div class="label">Week ${t.w}</div><div class="muted" style="font-size:12px">${new Date(t.created).toLocaleDateString([], { month: 'short', day: 'numeric' })}</div></div>
@@ -1251,22 +1401,22 @@ function tabHistory(seasons) {
   }
 
   const trophyTable = `<div class="scroll"><table class="t wrapcells">
-    <tr><th class="l">Season</th><th class="l">Champion</th><th class="l">Runner-up</th><th class="l">Best record</th><th class="l">Most points</th><th class="l">Most weekly highs</th><th class="l">Last place</th></tr>
+    <thead><tr><th scope="col" class="l">Season</th><th scope="col" class="l">Champion</th><th scope="col" class="l">Runner-up</th><th scope="col" class="l">Best record</th><th scope="col" class="l">Most points</th><th scope="col" class="l">Most weekly highs</th><th scope="col" class="l">Last place</th></tr></thead><tbody>
     ${trophies.map(x => `<tr><td class="l strong">${esc(x.season)}</td>
       <td class="l">${x.done ? (x.champ ? `<span class="money">★</span> <b>${nm(x.champ)}</b>` : '–') : '<span class="muted">In progress</span>'}</td><td class="l">${x.done ? nm(x.ru) : ''}</td>
       <td class="l">${nm(x.top)} <span class="muted">${rec(x.top)}</span></td><td class="l">${nm(x.most)} <span class="muted">${f2(x.most.pf)}</span></td>
       <td class="l">${nm(x.money)} <span class="muted">${x.money.highs}</span></td><td class="l">${x.done ? nm(x.last) : '<span class="muted">TBD</span>'}</td></tr>`).join('')}
-  </table></div>`;
+  </tbody></table></div>`;
 
   const winPct = r => (r.w + r.mw) / Math.max(1, r.w + r.l + r.mw + r.ml);
   const all = Object.values(byUid).filter(r => latest[r.uid]).sort((a, b) => b.titles - a.titles || winPct(b) - winPct(a));
   const allTime = `<div class="scroll"><table class="t">
-    <tr><th class="l">Manager</th><th>Seasons</th><th>Titles</th><th>Finals</th><th>Playoffs</th><th>Record</th><th>Win %</th><th>H2H</th><th>Points / game</th><th>Weekly highs</th></tr>
+    <thead><tr><th scope="col" class="l">Manager</th><th scope="col">Seasons</th><th scope="col">Titles</th><th scope="col">Finals</th><th scope="col">Playoffs</th><th scope="col">Record</th><th scope="col">Win %</th><th scope="col">H2H</th><th scope="col">Points / game</th><th scope="col">Weekly highs</th></tr></thead><tbody>
     ${all.map(r => { const gw = r.w + r.mw, gl = r.l + r.ml; return `<tr data-uid="${esc(r.uid)}"><td class="l"><b>${esc(who(r.uid))}</b> <span class="muted">${esc(latest[r.uid].owner)}</span></td>
       <td>${r.seasons}</td><td class="${r.titles ? 'money' : 'muted'}">${r.titles ? '★'.repeat(r.titles) : '0'}</td><td>${r.finals}</td><td>${r.playoffs}</td>
       <td class="strong">${gw}-${gl}</td><td>${(winPct(r) * 100).toFixed(1)}%</td><td>${r.w}-${r.l}${r.t ? '-' + r.t : ''}</td>
       <td>${f2(r.pf / Math.max(1, r.games))}</td><td>${r.highs}</td></tr>`; }).join('')}
-  </table></div><div class="note">Regular-season records across all ${seasons.length} seasons on Sleeper, including the one in progress. Playoff appearances and finals count finished seasons only.</div>`;
+  </tbody></table></div><div class="note">Regular-season records across all ${seasons.length} seasons on Sleeper, including the one in progress. Playoff appearances and finals count finished seasons only.</div>`;
 
   records.sort((a, b) => b.p - a.p);
   results.sort((a, b) => b.m - a.m);
@@ -1284,13 +1434,13 @@ function tabHistory(seasons) {
   const uids = Object.values(cur.teams).map(t => t.uid).filter(Boolean);
   const cell = (a, b) => h2h[a]?.[b];
   const rivalry = `<div class="scroll"><table class="t mx">
-    <tr><th class="l">Manager ↓ &nbsp; vs →</th>${uids.map(u => `<th class="vert">${esc(who(u))}</th>`).join('')}</tr>
+    <thead><tr><th scope="col" class="l">Manager ↓ &nbsp; vs →</th>${uids.map(u => `<th scope="col" class="vert">${esc(who(u))}</th>`).join('')}</tr></thead><tbody>
     ${uids.map(a => `<tr data-uid="${esc(a)}"><td class="l">${esc(who(a))}</td>${uids.map(bb => {
       if (a === bb) return '<td class="muted">·</td>';
       const v = cell(a, bb); if (!v || !(v.w + v.l)) return '<td class="muted">–</td>';
       const p = v.w / (v.w + v.l), tint = p > 0.5 ? `color-mix(in srgb, var(--accent) ${Math.round((p - 0.5) * 80)}%, transparent)` : p < 0.5 ? `color-mix(in srgb, var(--down) ${Math.round((0.5 - p) * 80)}%, transparent)` : 'transparent';
       return `<td style="background:${tint}" title="${esc(who(a))} vs ${esc(who(bb))}: ${v.w}-${v.l}">${v.w}-${v.l}</td>`; }).join('')}</tr>`).join('')}
-  </table></div><div class="note">All-time regular-season head-to-head. Purple means the row manager leads the series; red means they trail.</div>`;
+  </tbody></table></div><div class="note">All-time regular-season head-to-head. Purple means the row manager leads the series; red means they trail.</div>`;
   let top = null;
   for (const a of uids) for (const bb of uids) { const v = cell(a, bb); if (a < bb && v) { const n = v.w + v.l, gap = Math.abs(v.w - v.l);
     if (!top || n > top.n || (n === top.n && gap < top.gap)) top = { a, b: bb, v, n, gap }; } }
