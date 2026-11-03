@@ -415,13 +415,15 @@ async function nflGames(season, week) {
 
 // The NFL player list is ~2.5 MB, so keep just the players this league touches in localStorage.
 // It's downloaded again only when someone rosters a player we haven't seen, or once a week so NFL teams stay current.
-const PLAYER_KEY = 'ledger.players.v2', PLAYER_MAX_AGE = 7 * 864e5;
+// It also keeps a small list of every player on an NFL team by position (`pool`), for free-agent replacement levels.
+const PLAYER_KEY = 'ledger.players.v3', PLAYER_MAX_AGE = 7 * 864e5;
+const POOL_POS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF', 'DL', 'LB', 'DB'];
 async function loadPlayers(ids) {
   let store = {};
-  try { localStorage.removeItem('ledger.players.v1'); store = JSON.parse(localStorage.getItem(PLAYER_KEY)) || {}; } catch {}
-  let map = store.map || {};
+  try { ['ledger.players.v1', 'ledger.players.v2'].forEach(k => localStorage.removeItem(k)); store = JSON.parse(localStorage.getItem(PLAYER_KEY)) || {}; } catch {}
+  let map = store.map || {}, pool = store.pool || null;
   const missing = ids.filter(id => !map[id]);
-  if (missing.length || !store.ts || Date.now() - store.ts > PLAYER_MAX_AGE) {
+  if (missing.length || !pool || !store.ts || Date.now() - store.ts > PLAYER_MAX_AGE) {
     setLoading('Loading the NFL player list (about once a week)…');
     const all = await get('/players/nfl'), next = {};
     for (const id of new Set([...ids, ...Object.keys(map)])) {
@@ -430,9 +432,11 @@ async function loadPlayers(ids) {
                    : map[id] || { n: id, p: [], t: '' };
     }
     map = next;
-    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({ ts: Date.now(), map })); } catch {}
+    pool = Object.fromEntries(POOL_POS.map(pos => [pos, []]));
+    for (const [id, p] of Object.entries(all)) if (p.team) for (const pos of p.fantasy_positions || [p.position]) pool[pos]?.push(id);
+    try { localStorage.setItem(PLAYER_KEY, JSON.stringify({ ts: Date.now(), map, pool })); } catch {}
   }
-  return map;
+  return { map, pool };
 }
 const neededIds = d => [...new Set([
   ...Object.values(d.byWeek).flat().flatMap(r => r.players || []),
@@ -558,43 +562,77 @@ function scoreModel(base, ids) {
 // Backtested on the league's 2020-2025 seasons (odds from every week, scored against who made the playoffs):
 // this cut log loss from 0.427 (projection only, SD 22, no offset) to 0.407. Past over- or underperformance
 // against projections and lineup-setting habits added nothing beyond the season-average blend.
-const WEEKLY_SD = 24, TEAM_SD = 5, PROJ_WEIGHT = 0.6;
-function projFor(d, pid, w) {
+// That backtest used each future week's final projections, which already knew later injuries. Rerun with only what
+// was known at the time (backtest/backtest.mjs), the free-agent fill cut playoff log loss from 0.430 to 0.403 and
+// improved every season; a projection weight that shrinks for later weeks didn't help, so PROJ_DECAY stays 1.
+// Empty or zero-projected starting slots (an injured starter with no backup, a bye) are filled at replacement level:
+// the REPL_RANK-th best (0 = best) projected free agent at that position that week, since every manager will pick
+// someone up. PROJ_DECAY shrinks the projection's weight for weeks further out: weight = PROJ_WEIGHT × PROJ_DECAY^(weeks ahead − 1).
+// REPL_RANK and PROJ_DECAY were chosen with backtest/backtest.mjs; see backtest/README.md for the results.
+let WEEKLY_SD = 24, TEAM_SD = 5, PROJ_WEIGHT = 0.6, PROJ_DECAY = 1, REPL_RANK = 2;
+const projWeight = h => PROJ_WEIGHT * PROJ_DECAY ** Math.max(0, h - 1);
+function projFor(d, pid, w, pos = d.players?.[pid]?.p) {
   const s = d.proj?.[w]?.[pid]; if (!s) return 0;
   const sc = d.league.scoring_settings || {}, rec = +sc.rec || 0;
   const base = +((rec >= 1 ? s.pts_ppr : rec >= 0.5 ? s.pts_half_ppr : s.pts_std) || 0);
-  return base + ((d.players?.[pid]?.p || []).includes('TE') ? (+sc.bonus_rec_te || 0) * (+s.rec || 0) : 0);
+  return base + ((pos || []).includes('TE') ? (+sc.bonus_rec_te || 0) * (+s.rec || 0) : 0);
 }
-// Fill the narrowest slots first, then flex slots, each with the best eligible remaining player.
-function bestLineupTotal(d, pool) {
+// Replacement level per projection week and position, from players on an NFL team but on no roster in this league.
+function replacementLevels(d, pool) {
+  const owned = new Set(Object.values(d.rosterPlayers || {}).flat());
+  const used = [...new Set((d.league.roster_positions || []).flatMap(s => SLOT_ELIG[s] || []))];
+  const out = {};
+  for (const w of Object.keys(d.proj || {}).map(Number)) {
+    out[w] = {};
+    for (const pos of used) {
+      const pts = (pool[pos] || []).filter(id => !owned.has(id)).map(id => projFor(d, id, w, [pos])).sort((a, b) => b - a);
+      out[w][pos] = pts[REPL_RANK] || 0;
+    }
+  }
+  return out;
+}
+const slotRepl = (repl, s) => repl && SLOT_ELIG[s] ? Math.max(0, ...SLOT_ELIG[s].map(q => repl[q] || 0)) : 0;
+// Fill the narrowest slots first, then flex slots, each with the best eligible remaining player,
+// or the replacement-level free agent when that's better (an empty slot is never left at zero).
+function bestLineupTotal(d, pool, repl = null) {
   const slots = (d.league.roster_positions || []).filter(s => SLOT_ELIG[s]).sort((a, b) => SLOT_ELIG[a].length - SLOT_ELIG[b].length);
   const sorted = [...pool].sort((a, b) => b.pts - a.pts), used = new Set(); let tot = 0;
-  for (const s of slots) { const p = sorted.find(x => !used.has(x.id) && x.pos.some(q => SLOT_ELIG[s].includes(q))); if (p) { used.add(p.id); tot += p.pts; } }
+  for (const s of slots) {
+    const p = sorted.find(x => !used.has(x.id) && x.pos.some(q => SLOT_ELIG[s].includes(q)));
+    const r = slotRepl(repl, s);
+    if (p && p.pts >= r) { used.add(p.id); tot += p.pts; } else tot += r;
+  }
   return tot;
 }
 function weekModel(d, w, upTo, { avg, frozen } = {}) {
   if (!d.proj?.[w] || !d.players) return null;
   const rows = regRows(d, w), current = w === (d.liveWeek || d.remaining[0]) && w > upTo;
+  const repl = d.repl?.[w], pw = projWeight(w - upTo);
+  // Before the week's first kickoff, a starter projected for nothing (injured, on bye) is assumed swapped out.
+  const kicked = !frozen && d.liveWeek === w && d.games && Object.values(d.games).some(s => s !== 'pre_game');
+  const slotsOf = (d.league.roster_positions || []).filter(s => s !== 'BN' && s !== 'IR' && s !== 'TAXI');
   const mu = {}, sd = {}, live = {}, frac = {};
   for (const id of Object.keys(d.teams).map(Number)) {
     const row = rows.find(r => r.roster_id === id);
-    const starters = (row?.starters || []).map((pid, i) => ({ pid, act: row.starters_points?.[i] ?? 0 })).filter(x => x.pid && x.pid !== '0');
+    // An empty slot is '0' in Sleeper; it's kept so that, before kickoff, it's filled at replacement level too.
+    const starters = (row?.starters || []).map((pid, i) => ({ pid, i, act: row.starters_points?.[i] ?? 0 })).filter(x => x.pid);
     if (current && starters.length) {
       let m = 0, open = 0, tot = 0;
-      for (const { pid, act } of starters) {
-        const pj = projFor(d, pid, w); tot += pj;
+      for (const { pid, i, act } of starters) {
         const st = !frozen && d.liveWeek === w && d.games ? d.games[d.players[pid]?.t] : 'pre_game';  // undefined: no game this week
+        const pj = kicked ? projFor(d, pid, w) : Math.max(projFor(d, pid, w), slotRepl(repl, slotsOf[i]));
+        tot += pj;
         if (st === 'complete') m += act;
         else if (st === 'in_game') { const rest = Math.max(0, pj - act) * 0.5; m += act + rest; open += rest; }
-        else if (st === 'pre_game') { m += pj; open += pj; }
+        else if (st === 'pre_game' || !kicked) { m += pj; open += pj; }
       }
       // Points already scored stay as is; only the unplayed part blends in the season average.
       frac[id] = tot > 0 ? Math.min(1, open / tot) : 1;
-      mu[id] = avg ? m + (1 - PROJ_WEIGHT) * (avg[id] * frac[id] - open) : m;
+      mu[id] = avg ? m + (1 - pw) * (avg[id] * frac[id] - open) : m;
       sd[id] = WEEKLY_SD * Math.sqrt(frac[id]); live[id] = true;
     } else {
-      const pj = bestLineupTotal(d, (d.rosterPlayers?.[id] || []).map(pid => ({ id: pid, pts: projFor(d, pid, w), pos: d.players[pid]?.p || [] })));
-      mu[id] = avg ? PROJ_WEIGHT * pj + (1 - PROJ_WEIGHT) * avg[id] : pj;
+      const pj = bestLineupTotal(d, (d.rosterPlayers?.[id] || []).map(pid => ({ id: pid, pts: projFor(d, pid, w), pos: d.players[pid]?.p || [] })), repl);
+      mu[id] = avg ? pw * pj + (1 - pw) * avg[id] : pj;
       sd[id] = WEEKLY_SD; frac[id] = 1;
     }
   }
@@ -1261,7 +1299,7 @@ function tabRankings(b) {
       showS && '"Schedule left" ranks how tough each team\'s remaining regular-season opponents are, by their expected scores in the same model as the odds. 1st is the hardest.',
       !odds.final && `Each simulation plays out the real remaining schedule${d.leagueAvg ? ', counting both weekly games: the head-to-head matchup and the league median (a top-half score wins)' : ''}. Seeds go by total wins, then points for. "Clinched" and "Eliminated" are mathematically certain. Title odds play each simulated season through Sleeper's playoff bracket${odds.playoffProj ? ', using each team\'s projected lineup for that playoff week' : ''}.`,
       !odds.final && (odds.usesProj
-        ? `A team's expected score each week is ${Math.round(PROJ_WEIGHT * 100)}% its Sleeper projection (its best lineup from the current roster; this week, its actual lineup with finished games locked in) and ${Math.round(100 - PROJ_WEIGHT * 100)}% its season scoring average. Scores vary about ${WEEKLY_SD} points week to week, and each simulated season also gives every team a lasting shift, typically within ${TEAM_SD} points either way, since a roster can beat or miss its projections all year. That mix forecast best when tested on the league's 2020–2025 seasons. Projections can't see future trades or pickups.`
+        ? `A team's expected score each week is ${Math.round(PROJ_WEIGHT * 100)}% its Sleeper projection (its best lineup from the current roster; this week, its actual lineup with finished games locked in) and ${Math.round(100 - PROJ_WEIGHT * 100)}% its season scoring average. A starting spot the roster can't fill, such as an injured starter with no backup, counts as a waiver pickup: about the ${['', '2nd-', '3rd-', '4th-', '5th-'][REPL_RANK] || ''}best free agent at that position that week, since every manager will add someone. Scores vary about ${WEEKLY_SD} points week to week, and each simulated season also gives every team a lasting shift, typically within ${TEAM_SD} points either way, since a roster can beat or miss its projections all year. This setup forecast best when tested on the league's 2020–2025 seasons, using only what was known at each point in the season. Projections can't see future trades.`
         : 'Sleeper projections were unavailable, so each team scores around its season average, blended heavily with the league average (the setting that tested best on the league\'s 2020–2025 seasons).'));
   return sec('Power rankings', `After week ${power.last}`, table) + sec('The climb', 'Power rank after each week. Tap a team to follow it.', bumpChart(d, power));
 }
@@ -1578,9 +1616,10 @@ const warnBox = msg => `<div class="warn" role="status"><span>${esc(msg)}</span>
 
 async function analyze(d) {
   const c = compute(d);
-  let players = null;
-  try { players = await loadPlayers(neededIds(d)); } catch (e) { console.warn('players', e); }
+  let players = null, pool = null;
+  try { ({ map: players, pool } = await loadPlayers(neededIds(d))); } catch (e) { console.warn('players', e); }
   d.players = players;
+  d.repl = pool ? replacementLevels(d, pool) : null;
   const power = computePower(d);
   const lu = players ? lineups(d, players) : null;
   const b = { d, c, power, players, lu, mv: moves(d, players), sw: swapMatrix(d), updated: new Date() };
