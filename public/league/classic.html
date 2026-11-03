@@ -431,11 +431,15 @@ function scoreModel(base, ids) {
   const mu = Object.fromEntries(ids.map(id => { const sc = base[id].weeks.map(k => k.p); return [id, (sc.reduce((a, b) => a + b, 0) + SHRINK_GAMES * lg) / (sc.length + SHRINK_GAMES)]; }));
   return { mu, sd, lg };
 }
-// Projection model (the same approach as the fantasy-football-manager season outlook): each team's weekly
-// score is centered on its Sleeper projection with WEEKLY_SD points of spread. Future weeks use the best
+// Projection model: each team's weekly score centers on PROJ_WEIGHT of its Sleeper projection plus the rest
+// from its season average (scoreModel), with WEEKLY_SD points of spread and, per simulated season, a lasting
+// team offset of TEAM_SD (a roster can beat or miss its projections all year). Future weeks use the best
 // legal lineup from the current roster; the current week uses the actual lineup, locking in points from
 // finished games, so its uncertainty shrinks as the week is played.
-const WEEKLY_SD = 22;
+// Backtested on the league's 2020-2025 seasons (odds from every week, scored against who made the playoffs):
+// this cut log loss from 0.427 (projection only, SD 22, no offset) to 0.407. Past over- or underperformance
+// against projections and lineup-setting habits added nothing beyond the season-average blend.
+const WEEKLY_SD = 24, TEAM_SD = 5, PROJ_WEIGHT = 0.6;
 function projFor(d, pid, w) {
   const s = d.proj?.[w]?.[pid]; if (!s) return 0;
   const sc = d.league.scoring_settings || {}, rec = +sc.rec || 0;
@@ -448,10 +452,10 @@ function bestLineupTotal(d, pool) {
   for (const s of slots) { const p = sorted.find(x => !used.has(x.id) && x.pos.some(q => SLOT_ELIG[s].includes(q))); if (p) { used.add(p.id); tot += p.pts; } }
   return tot;
 }
-function weekModel(d, w, upTo) {
+function weekModel(d, w, upTo, { avg, frozen } = {}) {
   if (!d.proj?.[w] || !d.players) return null;
   const rows = regRows(d, w), current = w === (d.liveWeek || d.remaining[0]) && w > upTo;
-  const mu = {}, sd = {}, live = {};
+  const mu = {}, sd = {}, live = {}, frac = {};
   for (const id of Object.keys(d.teams).map(Number)) {
     const row = rows.find(r => r.roster_id === id);
     const starters = (row?.starters || []).map((pid, i) => ({ pid, act: row.starters_points?.[i] ?? 0 })).filter(x => x.pid && x.pid !== '0');
@@ -459,23 +463,28 @@ function weekModel(d, w, upTo) {
       let m = 0, open = 0, tot = 0;
       for (const { pid, act } of starters) {
         const pj = projFor(d, pid, w); tot += pj;
-        const st = d.liveWeek === w && d.games ? d.games[d.players[pid]?.t] : 'pre_game';  // undefined: no game this week
+        const st = !frozen && d.liveWeek === w && d.games ? d.games[d.players[pid]?.t] : 'pre_game';  // undefined: no game this week
         if (st === 'complete') m += act;
         else if (st === 'in_game') { const rest = Math.max(0, pj - act) * 0.5; m += act + rest; open += rest; }
         else if (st === 'pre_game') { m += pj; open += pj; }
       }
-      mu[id] = m; sd[id] = WEEKLY_SD * Math.sqrt(tot > 0 ? Math.min(1, open / tot) : 1); live[id] = true;
+      // Points already scored stay as is; only the unplayed part blends in the season average.
+      frac[id] = tot > 0 ? Math.min(1, open / tot) : 1;
+      mu[id] = avg ? m + (1 - PROJ_WEIGHT) * (avg[id] * frac[id] - open) : m;
+      sd[id] = WEEKLY_SD * Math.sqrt(frac[id]); live[id] = true;
     } else {
-      mu[id] = bestLineupTotal(d, (d.rosterPlayers?.[id] || []).map(pid => ({ id: pid, pts: projFor(d, pid, w), pos: d.players[pid]?.p || [] })));
-      sd[id] = WEEKLY_SD;
+      const pj = bestLineupTotal(d, (d.rosterPlayers?.[id] || []).map(pid => ({ id: pid, pts: projFor(d, pid, w), pos: d.players[pid]?.p || [] })));
+      mu[id] = avg ? PROJ_WEIGHT * pj + (1 - PROJ_WEIGHT) * avg[id] : pj;
+      sd[id] = WEEKLY_SD; frac[id] = 1;
     }
   }
-  return { mu, sd, live };
+  return { mu, sd, live, frac };
 }
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
   t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-function simulate(d, upTo, N = CONFIG.sims) {
+// frozen: score the current week from pre-kickoff projections, ignoring live points.
+function simulate(d, upTo, N = CONFIG.sims, { frozen = false } = {}) {
   const base = tally(d, upTo);
   const ids = Object.keys(d.teams).map(Number);
   const seeds = d.league.settings.playoff_teams || 6;
@@ -483,15 +492,17 @@ function simulate(d, upTo, N = CONFIG.sims) {
   const { mu, sd } = scoreModel(base, ids);
   const left = [];
   for (let w = upTo + 1; w < d.playoffStart; w++)
-    left.push({ w, pairs: pairsOf(regRows(d, w)).map(([a, b]) => [a.roster_id, b.roster_id]), m: weekModel(d, w, upTo) });
+    left.push({ w, pairs: pairsOf(regRows(d, w)).map(([a, b]) => [a.roster_id, b.roster_id]), m: weekModel(d, w, upTo, { avg: mu, frozen }) });
   const rand = rng(20261031 + upTo * 7919);
   const gauss = () => { let u = 0; while (!u) u = rand(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rand()); };
-  const draw = (id, m) => m ? m.mu[id] + m.sd[id] * gauss() : mu[id] + sd * gauss();
+  // off: each simulated season's lasting team offset (projection model only), scaled to the unplayed share of the week.
+  const off = Object.fromEntries(ids.map(id => [id, 0]));
+  const draw = (id, m) => m ? m.mu[id] + off[id] * (m.frac?.[id] ?? 1) + m.sd[id] * gauss() : mu[id] + sd * gauss();
   // Playoff games: average of each team's remaining projected weeks (season-average model if no projections).
   const projected = left.filter(x => x.m);
   const po = projected.length ? { mu: Object.fromEntries(ids.map(id => [id, mean(projected.map(x => x.m.mu[id]))])), sd: Object.fromEntries(ids.map(id => [id, WEEKLY_SD])) } : null;
   // Each playoff round uses that week's projected best lineup (byes and injuries included), else the average above.
-  const rounds = [0, 1, 2].map(r => weekModel(d, d.playoffStart + r, upTo) || po);
+  const rounds = [0, 1, 2].map(r => weekModel(d, d.playoffStart + r, upTo, { avg: mu }) || po);
   const zero = () => Object.fromEntries(ids.map(id => [id, 0]));
   const made = zero(), bye = zero(), champ = zero(), wonFirst = zero(), madeW = zero(), madeL = zero(), medFirst = zero();
   // This week's outcome per team: 0, 1 or 2 wins (head-to-head + median), and how often each led to the playoffs.
@@ -500,6 +511,7 @@ function simulate(d, upTo, N = CONFIG.sims) {
   const bracketOk = seeds === 6 || seeds === 4;
   const game = (a, b, r) => draw(a, rounds[r]) > draw(b, rounds[r]) ? a : b;
   for (let s = 0; s < sims; s++) {
+    if (projected.length) for (const id of ids) off[id] = TEAM_SD * gauss();
     const W = {}, P = {};
     for (const id of ids) { const b = base[id]; W[id] = b.w + b.mw + b.t / 2; P[id] = b.pf; }
     let firstWinners = null, firstMed = null;
@@ -563,7 +575,11 @@ function computePower(d) {
   if (!done.length) return null;
   const history = done.map(w => ({ w, rows: powerAt(d, w) }));
   const last = done[done.length - 1];
-  return { history, last, odds: simulate(d, last), prevOdds: done.length > 1 ? simulate(d, done[done.length - 2]) : null };
+  const odds = simulate(d, last);
+  // Once games are under way, the game-of-the-week order comes from pre-kickoff odds so live scores don't reshuffle it.
+  const live = d.liveWeek && d.liveWeek === odds.firstWeek && regRows(d, d.liveWeek).some(r => r.points > 0);
+  return { history, last, odds, preKick: live ? simulate(d, last, CONFIG.sims, { frozen: true }) : odds,
+           prevOdds: done.length > 1 ? simulate(d, done[done.length - 2]) : null };
 }
 function preWeekProb(d, w, a, b) {
   const ids = Object.keys(d.teams).map(Number);
@@ -812,8 +828,12 @@ function stakesSection(b) {
   const live = d.liveWeek === w && rows.some(r => r.points > 0);
   const started = (a, b2) => live && (ptsOf(a) > 0 || ptsOf(b2) > 0);
   const ptsOf = id => rows.find(r => r.roster_id === id)?.points ?? 0;
-  const lev = id => (odds.cond[id]?.win ?? 0) - (odds.cond[id]?.lose ?? 0);
-  const games = odds.firstPairs.map(([a, bb]) => ({ a, b: bb, lev: lev(a) + lev(bb) })).sort((x, y) => y.lev - x.lev);
+  // Expected movement in both teams' playoff odds: the win/loss swing times 2p(1-p), so a close game with a lot
+  // riding on it beats a lopsided one. Taken from pre-kickoff odds so the order holds while games are played.
+  const pre = power.preKick || odds;
+  const swing = id => (pre.cond[id]?.win ?? 0) - (pre.cond[id]?.lose ?? 0);
+  const games = odds.firstPairs.map(([a, bb]) => { const p = pre.pair[a]?.p ?? 0.5;
+    return { a, b: bb, lev: 2 * p * (1 - p) * (swing(a) + swing(bb)) }; }).sort((x, y) => y.lev - x.lev);
   const ifTxt = id => { if (odds.clinched.has(id)) return 'Playoffs: clinched'; if (odds.eliminated.has(id)) return 'Playoffs: eliminated';
     const k = odds.cond[id]; if (!k || k.win == null || k.lose == null) return '';
     const shown = k.rec.map((r, n) => ({ ...r, n })).filter(r => r.p >= 0.005 && r.made != null);
@@ -833,8 +853,8 @@ function stakesSection(b) {
       <div>${teamCell(B, false)}<div class="if">${ifTxt(g.b)}</div></div>
     </div>`;
   };
-  return sec(`Week ${w}: what's at stake`, d.leagueAvg ? 'Each team plays two games: its opponent and the league median. Ordered by how much the head-to-head result swings both teams\' playoff odds.' : 'Ordered by how much the result swings both teams\' playoff odds',
-    games.map(row).join('') + `<div class="note">The big percentages are the head-to-head win chances. "Beats median" is the chance of finishing in the top half of all scores this week. "Playoffs if 2-0 / 1-1 / 0-2" are playoff odds after each possible weekly record. All of it comes from the same simulation as the playoff race.${odds.firstModel ? ` Projections use each team's actual Week ${w} lineup and Sleeper's player projections${live ? ', with points from finished games locked in, so the odds update as games are played' : ''}.` : ''}</div>`);
+  return sec(`Week ${w}: what's at stake`, d.leagueAvg ? 'Each team plays two games: its opponent and the league median. Ordered by how much each head-to-head game is expected to move both teams\' playoff odds (what\'s riding on it, and how close it is), set before kickoff.' : 'Ordered by how much each game is expected to move both teams\' playoff odds (what\'s riding on it, and how close it is), set before kickoff',
+    games.map(row).join('') + `<div class="note">The big percentages are the head-to-head win chances. "Beats median" is the chance of finishing in the top half of all scores this week. "Playoffs if 2-0 / 1-1 / 0-2" are playoff odds after each possible weekly record. All of it comes from the same simulation as the playoff race.${odds.firstModel ? ` Projections use each team's actual Week ${w} lineup and Sleeper's player projections${live ? ', with points from finished games locked in, so the odds update as games are played. The order of games doesn\'t move with the scores' : ''}.` : ''}</div>`);
 }
 
 function superlatives(b) {
@@ -886,7 +906,7 @@ function tabRankings(b) {
     ${rows}</table></div>
     <div class="note">Power blends season all-play win rate (50%), the last three weeks of all-play (25%) and actual record including median games (25%), on a 0–100 scale.
     ${odds.final ? 'The regular season is over, so playoff and bye columns show the final result.'
-      : `Odds come from ${CONFIG.sims.toLocaleString()} simulations of the remaining schedule${d.leagueAvg ? ', counting both weekly games: the head-to-head matchup and the league median (top half of the week\'s scores win)' : ''}. Seeds go by total wins, then points for; the top ${odds.seeds} make it. "Clinched" and "Eliminated" are mathematically certain. Title odds play each simulated season through Sleeper\'s fixed bracket, one week per round${odds.playoffProj ? ', using each team\'s projected lineup for that playoff week' : ''}. ${odds.usesProj ? `Each week, a team's score centers on its Sleeper projection: the best lineup from its current roster (this week, its actual lineup with finished games locked in), with about ${WEEKLY_SD} points of week-to-week spread. Projections can't see future trades or pickups.` : 'Sleeper projections were unavailable, so each team scores around its season average, blended heavily with the league average (the setting that tested best on the league\'s 2020–2025 seasons).'}${odds.byes ? ` The top ${odds.byes} seeds get first-round byes.` : ''}`}</div>`;
+      : `Odds come from ${CONFIG.sims.toLocaleString()} simulations of the remaining schedule${d.leagueAvg ? ', counting both weekly games: the head-to-head matchup and the league median (top half of the week\'s scores win)' : ''}. Seeds go by total wins, then points for; the top ${odds.seeds} make it. "Clinched" and "Eliminated" are mathematically certain. Title odds play each simulated season through Sleeper\'s fixed bracket, one week per round${odds.playoffProj ? ', using each team\'s projected lineup for that playoff week' : ''}. ${odds.usesProj ? `Each week, a team's expected score is ${Math.round(PROJ_WEIGHT * 100)}% its Sleeper projection (the best lineup from its current roster; this week, its actual lineup with finished games locked in) and ${Math.round(100 - PROJ_WEIGHT * 100)}% its season scoring average. Scores vary about ${WEEKLY_SD} points week to week, and each simulated season also gives every team a lasting shift, typically within ${TEAM_SD} points either way, since a roster can beat or miss its projections all year. That mix forecast best when tested on the league's 2020–2025 seasons. Projections can't see future trades or pickups.` : 'Sleeper projections were unavailable, so each team scores around its season average, blended heavily with the league average (the setting that tested best on the league\'s 2020–2025 seasons).'}${odds.byes ? ` The top ${odds.byes} seeds get first-round byes.` : ''}`}</div>`;
   return sec('Power rankings', `After week ${power.last}`, table) + sec('The climb', 'Power rank after each week. Hover or tap a team to follow it.', bumpChart(d, power));
 }
 
