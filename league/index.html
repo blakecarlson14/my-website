@@ -141,18 +141,14 @@
   /* Scoreboard boxes: live games and past results */
   .boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .boxes .box { display: flex; flex-direction: column; }
-  /* Boxes without a label take their spare height on top, so score rows line up across a pair. */
-  .boxes .box.nocap > .gl:first-child { margin-top: auto; }
   .boxes.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   @media (max-width: 880px) { .boxes.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 600px) { .boxes, .boxes.three { grid-template-columns: minmax(0, 1fr); } }
   .box { background: var(--card); border: 1px solid var(--hair); min-width: 0; }
-  .box.big { grid-column: 1 / -1; border-color: var(--ink-2); }
-  .box.big .bx { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 0 18px; align-items: center; }
-  .box.big .bx > div:last-child { border-left: 1px solid var(--hair); padding-top: 2px; }
-  @media (max-width: 600px) { .box.big .bx { grid-template-columns: minmax(0, 1fr); } .box.big .bx > div:last-child { border-left: 0; } }
+  .box.big { border-color: var(--ink-2); }
   .box .pad { height: 10px; }
-  .box.wide { grid-column: 1 / -1; }
+  .box.nocap .cap { visibility: hidden; }
+  @media (max-width: 600px) { .box.nocap .cap { display: none; } }
   .box.mygame { border-color: var(--you); }
   .box .cap { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); padding: 7px 12px 0; }
   .box .cap b { color: var(--ink); font-weight: 700; }
@@ -164,6 +160,7 @@
   .gl.ahead .team .nm { font-weight: 700; }
   .gl .sc { font: 600 19px/1 var(--cond); min-width: 3.4em; text-align: right; }
   .gl .sc.proj { font: 400 14px/1 var(--sans); color: var(--muted); }
+  .gl .sc small { display: block; font: 400 12px/1 var(--sans); color: var(--muted); margin-top: 3px; letter-spacing: 0; }
   .gl .wp { font: 700 19px/1 var(--cond); min-width: 2.8em; text-align: right; }
   .gl:not(.ahead) .wp, .gl.lost .sc { color: var(--muted); font-weight: 500; }
   .gl .tagm { font: 600 12px/1 var(--sans); color: var(--muted); }
@@ -171,13 +168,6 @@
   .wbar { display: flex; height: 4px; gap: 2px; margin: 0 12px; }
   .wbar i { display: block; height: 100%; background: var(--bar); }
   .wbar i:last-child { background: var(--hair-2); }
-  .box details summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 8px 12px; list-style-position: inside; }
-  .box details[open] summary { padding-bottom: 2px; }
-  .ifs { width: calc(100% - 24px); margin: 2px 12px 10px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-  .ifs th { font-weight: 500; color: var(--muted); text-align: right; padding: 3px 0 3px 8px; }
-  .ifs td { text-align: right; padding: 3px 0 3px 8px; border-top: 1px solid var(--hair); }
-  .ifs th:first-child, .ifs td:first-child { text-align: left; padding-left: 0; }
-  .ifs td.say { text-align: left; color: var(--muted); }
   .box .foot { font-size: 12px; color: var(--muted); padding: 0 12px 9px; }
 
   /* Odds list */
@@ -236,6 +226,10 @@
   .t th.l, .t td.l { text-align: left; }
   .t td.wrap { white-space: normal; }
   .t tr.cut td { border-bottom: 2px solid var(--rule); }
+  .t.stakes tr.gtop td { border-top: 2px solid var(--ink-2); }
+  .t.stakes td.say { text-align: center; color: var(--muted); }
+  .narrow-only { display: none; }
+  @media (max-width: 600px) { .wide-only { display: none; } .narrow-only { display: inline; } }
   .t .strong { font-weight: 700; }
   .t td.big { font: 700 18px/1 var(--cond); }
   @media (max-width: 600px) {
@@ -1251,15 +1245,15 @@ function needLine(odds, id) {
   if (k.med == null) s = `Win this week and your playoff odds go to <b>${pct(k.win)}</b>. Lose and they drop to <b>${pct(k.lose)}</b>.`;
   else {
     const at = n => shown.find(r => r.n === n);
-    const parts = [[2, 'Win both games'], [1, 'split'], [0, 'lose both']].filter(([n]) => at(n)).map(([n, l]) => `${l} and you're at <b>${pct(at(n).made)}</b>`);
-    s = parts.join(', ').replace(/^./, ch => ch.toUpperCase()) + '.';
+    const parts = [[2, 'Win your game and score in the top half'], [1, 'get one of the two'], [0, 'get neither']].filter(([n]) => at(n)).map(([n, l]) => `${l} and you're at <b>${pct(at(n).made)}</b>`);
+    s = parts.join('; ').replace(/^./, ch => ch.toUpperCase()) + '.';
   }
   if (hi >= 0.995 && lo < 0.9) s += ' This week can all but lock it up.';
   else if (hi < 0.05) s += ' It would take help from around the league too.';
   return `<p class="need">${s}</p>`;
 }
 
-// This week's games as scoreboard boxes, biggest stakes first. Each box opens to what the result means for the playoffs.
+// This week's games as scoreboard boxes, biggest stakes first, then one table of what each result means for the playoffs.
 function gamesSection(b) {
   const { d, power } = b;
   const odds = power.odds;
@@ -1273,49 +1267,48 @@ function gamesSection(b) {
   const swing = id => (pre.cond[id]?.win ?? 0) - (pre.cond[id]?.lose ?? 0);
   const games = odds.firstPairs.map(([a, bb]) => { const p = pre.pair[a]?.p ?? 0.5;
     return { a, b: bb, lev: 2 * p * (1 - p) * (swing(a) + swing(bb)) }; }).sort((x, y) => y.lev - x.lev);
-  // The what-ifs: each team's playoff odds after each possible result this week.
-  const ifs = (g, decided) => {
-    const ids = [g.a, g.b], K = id => odds.cond[id];
-    const plain = id => odds.clinched.has(id) ? 'Clinched' : odds.eliminated.has(id) ? 'Eliminated' : null;
-    if (decided || ids.every(id => plain(id) || !K(id) || K(id).win == null)) return '';
-    const med = d.leagueAvg && ids.some(id => K(id)?.med != null);
-    const cols = med ? [[2, 'Win both'], [1, 'Split'], [0, 'Lose both']] : [['win', 'Win'], ['lose', 'Lose']];
-    const cell = (id, key) => { const k = K(id); if (!k) return '–';
-      if (!med) return pct(k[key]);
-      const r = k.rec[key]; return r && r.p >= 0.005 && r.made != null ? pct(r.made) : '<span class="muted">–</span>'; };
-    const row = id => { const t = d.teams[id], p = plain(id);
-      const all = !p && med && K(id) ? K(id).rec.filter(r => r.p >= 0.005 && r.made != null) : [];
-      const say = p || (all.length && all.every(r => r.made >= 0.995) ? 'In either way' : all.length && all.every(r => r.made < 0.005) ? 'Long shot either way' : null);
-      return `<tr><td>${esc(t.name)}</td>${say ? `<td class="say" colspan="${cols.length}">${say}</td>` : cols.map(([k]) => `<td>${cell(id, k)}</td>`).join('')}</tr>`; };
-    const half = med ? `<tr><td colspan="${cols.length + 1}" class="say">Chance of a top-half score (the median win): ${ids.map(id => `${esc(d.teams[id].name)} ${pct(K(id)?.med)}`).join(', ')}.</td></tr>` : '';
-    return `<details data-k="g${g.a}-${g.b}" ${g.open ? 'open' : ''}><summary>Playoff odds after each result</summary>
-      <table class="ifs"><thead><tr><th></th>${cols.map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>${row(g.a)}${row(g.b)}${half}</tbody></table></details>`;
-  };
-  const nCompact = games.length - 1;
-  let seenCompact = 0;
+  const decidedG = g => { const pa = odds.pair[g.a].p; return live && (pa >= 0.999 || pa <= 0.001); };
   const box = (g, i) => {
     const pa = odds.pair[g.a].p, started = live && (ptsOf(g.a) > 0 || ptsOf(g.b) > 0);
-    const decided = live && (pa >= 0.999 || pa <= 0.001);
+    const decided = decidedG(g);
     const final = decided && m?.live?.[g.a] && m?.live?.[g.b] && m.sd[g.a] < 0.5 && m.sd[g.b] < 0.5;
-    const my = g.a === mine || g.b === mine, feat = i === 0;
-    g.open = i === 0;
+    const my = g.a === mine || g.b === mine;
     const line = (id, p) => {
       const ahead = started ? ptsOf(id) >= ptsOf(id === g.a ? g.b : g.a) : p >= 0.5;
-      const sc = started ? `<span class="sc">${f2(ptsOf(id))}</span>` : m ? `<span class="sc proj" title="Projected">${f1(m.mu[id])}</span>` : '';
+      // Live: points so far, with the projected final (points scored plus what's left to play) beneath.
+      const sc = started ? `<span class="sc">${f2(ptsOf(id))}${m && !final ? `<small>proj ${f1(m.mu[id])}</small>` : ''}</span>`
+        : m ? `<span class="sc proj" title="Projected">${f1(m.mu[id])}</span>` : '';
       const wp = decided ? (p >= 0.5 ? (final ? '✓' : '') : '') : pct(p);
       return `<div class="gl ${ahead ? 'ahead' : ''}" data-tid="${id}">${teamCell(d.teams[id], false)}${sc}<span class="wp">${wp}</span></div>`;
     };
     const cap = i === 0 ? `Biggest game${my ? ' · yours' : ''}` : my ? 'Your game' : '';
     const capR = decided ? (final ? 'Final' : 'All but over') : '';
-    const score = `${line(g.a, pa)}${line(g.b, 1 - pa)}${decided ? '' : `<div class="wbar"><i style="width:${pa * 100}%"></i><i style="width:${(1 - pa) * 100}%"></i></div>`}`;
-    const what = feat ? ifs(g, decided) : '';
-    // With an odd number of compact boxes, the last one takes the whole row instead of leaving a hole beside it.
-    const wide = !feat && ++seenCompact === nCompact && nCompact % 2 === 1;
-    return `<div class="box ${feat ? 'big' : ''} ${wide ? 'wide' : ''} ${my ? 'mygame' : ''} ${cap || capR ? '' : 'nocap'}">${cap || capR ? `<div class="cap"><b>${cap}</b><span>${capR}</span></div>` : ''}
-      ${what ? `<div class="bx"><div>${score}</div><div>${what}</div></div>` : score}<div class="pad"></div></div>`;
+    // Every box has a caption row (blank ones are invisible on desktop), so boxes side by side line up row for row.
+    return `<div class="box ${i === 0 ? 'big' : ''} ${my ? 'mygame' : ''} ${cap || capR ? '' : 'nocap'}"><div class="cap"><b>${cap || '&nbsp;'}</b><span>${capR}</span></div>
+      ${line(g.a, pa)}${line(g.b, 1 - pa)}${decided ? '' : `<div class="wbar"><i style="width:${pa * 100}%"></i><i style="width:${(1 - pa) * 100}%"></i></div>`}<div class="pad"></div></div>`;
   };
+  // One table of every team's playoff odds after each possible result, grouped by game in the same order as the boxes.
+  const K = id => odds.cond[id];
+  const med = d.leagueAvg && games.some(g => K(g.a)?.med != null || K(g.b)?.med != null);
+  const cols = med ? [[2, 'Win both'], [1, 'Split'], [0, 'Lose both']] : [['win', 'Win'], ['lose', 'Lose']];
+  const cell = (k, key) => { if (!med) return pct(k[key]);
+    const r = k.rec[key]; return r && r.p >= 0.005 && r.made != null ? pct(r.made) : '<span class="muted">–</span>'; };
+  const body = games.map(g => { const decided = decidedG(g);
+    return [g.a, g.b].map((id, j) => { const k = K(id);
+      const all = med && k ? k.rec.filter(r => r.p >= 0.005 && r.made != null) : [];
+      // Desktop shows the status in the Now column; phones hide that column, so the row names it instead.
+      const done = odds.clinched.has(id) ? 'Clinched' : odds.eliminated.has(id) ? 'Eliminated' : null;
+      const say = done ? `<span class="wide-only">Same either way</span><span class="narrow-only">${done}</span>` : decided ? 'Game decided'
+        : !k || k.win == null ? '–' : all.length && all.every(r => r.made >= 0.995) ? 'Safe either way' : all.length && all.every(r => r.made < 0.005) ? 'Long shot either way' : null;
+      return `<tr data-tid="${id}" class="${j ? '' : 'gtop'}"><td class="l">${esc(d.teams[id].name)}</td><td class="opt">${oddsTxt(odds, id)}</td>${med ? `<td class="opt">${pct(k?.med)}</td>` : ''}
+        ${say ? `<td class="say" colspan="${cols.length}">${say}</td>` : cols.map(([key]) => `<td>${cell(k, key)}</td>`).join('')}</tr>`; }).join(''); }).join('');
+  const legend = med
+    ? 'Each week has two wins up for grabs: the matchup and a top-half score. These are each team\'s playoff odds if it wins both, splits them or loses both.<span class="wide-only"> "Top half" is its chance of a top-half score.</span>'
+    : 'Each team\'s playoff odds if it wins or loses this week.';
+  const stakes = `<div class="sub-h">What's at stake</div><div class="note" style="margin: -4px 0 8px">${legend}</div>
+    <div class="scroll"><table class="t stakes"><thead><tr><th scope="col" class="l">Team</th><th scope="col" class="opt">Now</th>${med ? '<th scope="col" class="opt">Top half</th>' : ''}${cols.map(([, l]) => `<th scope="col">${l}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`;
   const dek = `${live ? 'Live scores' : 'Projected scores'} and win chances, biggest stakes first.`;
-  return sec(`Week ${w} games`, dek, `<div class="boxes">${games.map(box).join('')}</div>` + how('stakes',
+  return sec(`Week ${w} games`, dek, `<div class="boxes">${games.map(box).join('')}</div>` + stakes + how('stakes',
     `Win chances come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the season${live ? ', with points already scored locked in' : ''}. The biggest game is the one expected to move both teams' playoff odds the most; the order is set before kickoff.`));
 }
 
