@@ -396,20 +396,39 @@ async function load(leagueId, opts = {}) {
   }
   const final = (bracket || []).find(m => m.p === 1);
   return {
-    league, teams, weeks, remaining, byWeek, liveWeek, playoffStart, playoffWeeks, complete, nfl, proj, games, rosterPlayers,
+    league, teams, weeks, remaining, byWeek, liveWeek, playoffStart, playoffWeeks, complete, nfl, proj, games: games?.status || null, gameLeft: games?.left || null, rosterPlayers,
     leagueAvg: !!s.league_average_match, transactions: txs.flat().filter(t => t && t.status === 'complete'),
     champion: final?.w ?? null, runnerUp: final?.l ?? null, failed,
     bracket: postseason && bracket?.length ? bracket : null,
   };
 }
-// NFL team -> 'pre_game' | 'in_game' | 'complete' for one week, or null if the schedule is unavailable.
+// For one week: status per NFL team ('pre_game' | 'in_game' | 'complete') and the share of each team's game still
+// to play (1 before kickoff, 0 when final), from Sleeper's live scores. Falls back to the schedule (status only).
+const gameLeft = md => {
+  if (!md || md.is_over) return 0;
+  const q = +md.quarter_num || 0, [mm, ss] = String(md.time_remaining || '15:00').split(':').map(Number);
+  if (!q) return 1;
+  if (q > 4 || md.is_overtime) return 0.02;
+  return Math.max(0.02, Math.min(1, ((4 - q) * 15 + (mm || 0) + (ss || 0) / 60) / 60));
+};
 async function nflGames(season, week) {
+  try {
+    const r = await fetch(`https://api.sleeper.com/scores/nfl/regular/${season}/${week}`);
+    if (r.ok) {
+      const status = {}, left = {};
+      for (const g of await r.json()) {
+        const md = g.metadata || {}, l = g.status === 'complete' ? 0 : g.status === 'pre_game' ? 1 : gameLeft(md);
+        for (const tm of [md.home_team, md.away_team]) if (tm) { status[tm] = g.status; left[tm] = l; }
+      }
+      if (Object.keys(status).length) return { status, left };
+    }
+  } catch {}
   try {
     const r = await fetch(`https://api.sleeper.com/schedule/nfl/regular/${season}`);
     if (!r.ok) return null;
-    const games = {};
-    for (const g of await r.json()) if (g.week === week) { games[g.home] = g.status; games[g.away] = g.status; }
-    return games;
+    const status = {};
+    for (const g of await r.json()) if (g.week === week) { status[g.home] = g.status; status[g.away] = g.status; }
+    return { status, left: null };
   } catch { return null; }
 }
 
@@ -623,7 +642,10 @@ function weekModel(d, w, upTo, { avg, frozen } = {}) {
         const pj = kicked ? projFor(d, pid, w) : Math.max(projFor(d, pid, w), slotRepl(repl, slotsOf[i]));
         tot += pj;
         if (st === 'complete') m += act;
-        else if (st === 'in_game') { const rest = Math.max(0, pj - act) * 0.5; m += act + rest; open += rest; }
+        // A game in progress: points so far plus the projection for the share of the game still to play.
+        // (Without the game clock, assume half of whatever the projection still owes.)
+        else if (st === 'in_game') { const lf = d.gameLeft?.[d.players[pid]?.t];
+          const rest = lf != null ? pj * lf : Math.max(0, pj - act) * 0.5; m += act + rest; open += rest; }
         else if (st === 'pre_game' || !kicked) { m += pj; open += pj; }
       }
       // Points already scored stay as is; only the unplayed part blends in the season average.
@@ -1707,7 +1729,7 @@ async function refreshLive() {
       return openSeason(id);
     }
     d.byWeek[w] = rows;
-    if (games) d.games = games;
+    if (games) { d.games = games.status; d.gameLeft = games.left; }
     b.power = computePower(d, b.power); b.heads = headlines(b); b.updated = new Date();
     if (['front', 'rankings', 'money'].includes(state.tab)) await renderTab({ keepView: true });
     else renderChrome(b);
