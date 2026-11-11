@@ -103,9 +103,8 @@
   .err { margin-top: 24px; padding: 14px; border: 1px solid var(--down); color: var(--down); }
   .warn { margin-top: 16px; padding: 10px 12px; border: 1px solid var(--down); display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 14px; }
   details.how { margin-top: 14px; font-size: 13px; color: var(--muted); max-width: 75ch; }
-  details.how summary, details.more summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 8px 0; min-height: 36px; }
+  details.how summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 8px 0; min-height: 36px; }
   details.how p { margin: 4px 0 8px; }
-  details.more { margin-top: 14px; }
   .seg { display: inline-flex; border: 1px solid var(--hair-2); border-radius: 6px; overflow: hidden; }
   .seg button { font: 600 13px/1 var(--sans); color: var(--muted); background: transparent; border: 0; padding: 0 12px; min-height: 34px; cursor: pointer; }
   .seg button + button { border-left: 1px solid var(--hair-2); }
@@ -158,7 +157,7 @@
   .gl + .gl, .stk + .gl { border-top: 1px solid var(--hair); }
   /* Under a team line: its playoff odds after each result. Name-aligned (12px pad + 26px avatar + 9px gap). */
   .stk { font-size: 12px; line-height: 1.3; color: var(--muted); padding: 0 12px 7px 47px; margin-top: -3px; font-variant-numeric: tabular-nums; }
-  .stk.none { visibility: hidden; }
+  .stk.none { color: transparent; }
   @media (max-width: 600px) { .stk.none { display: none; } }
   .gl .team { flex: 1; min-width: 0; }
   .gl .team .nm { font-weight: 500; }
@@ -274,7 +273,7 @@
 </style>
 </head>
 <body>
-<div class="strip"><div class="strip-in" id="strip"></div></div>
+<div class="strip" hidden><div class="strip-in" id="strip"></div></div>
 <div class="wrap">
   <header class="mast">
     <div><h1 id="title">The League Ledger</h1><div class="meta" id="meta">Loading</div></div>
@@ -945,9 +944,6 @@ function moves(d, players) {
   return { perTeam, pickups, trades, faabBudget: d.league.settings.waiver_type === 2 ? d.league.settings.waiver_budget : null };
 }
 
-// ============================== SCHEDULE SWAP ==============================
-// Row team's H2H record if it had played the column team's schedule.
-
 // ============================== HEADLINES ==============================
 // Templated from the data. Past tense dodges "59ers wins/win" agreement problems.
 function headlines(b) {
@@ -1273,7 +1269,7 @@ function gamesSection(b) {
       : [{ l: 'Win', v: k.win }, { l: 'Lose', v: k.lose }];
     const shown = opts.filter(o => o.v != null), vs = shown.map(o => o.v);
     if (shown.length < 2 || Math.max(...vs) - Math.min(...vs) < 0.05) return '';
-    return shown.map(o => `${o.l} → ${pct(o.v)}`).join(' · ');
+    return shown.map(o => `${o.l.replace(' ', '&nbsp;')}&nbsp;→&nbsp;${pct(o.v)}`).join(' · ');
   };
   const stakesOf = Object.fromEntries(games.flatMap(g => [g.a, g.b].map(id => [id, decidedG(g) ? '' : stakesTxt(id)])));
   const anyStakes = Object.values(stakesOf).some(Boolean);
@@ -1305,7 +1301,7 @@ function gamesSection(b) {
   return sec(`Week ${w} games`, dek, `<div class="boxes">${games.map(box).join('')}</div>` + how('stakes',
     `Win chances come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the season${live ? ', with points already scored locked in' : ''}. The biggest game is the one expected to move both teams' playoff odds the most; the order is set before kickoff.`,
     anyStakes && (med ? 'Each week has two wins up for grabs: the matchup and a top-half score. The line under each team is its playoff odds if it wins both, splits them or loses both.'
-      : 'The line under each team is its playoff odds if it wins or loses this week.') + ' It\'s left out when the result would move them less than 5 points.'));
+      : 'The line under each team is its playoff odds if it wins or loses this week.') + ' It\'s left out when the result would move them less than 5 points, and once the game is decided.'));
 }
 
 // Plain-text recap of the front-page stories, for pasting into the group chat.
@@ -1391,13 +1387,13 @@ function tabTable(b) {
     <tbody>${powerRows}</tbody></table></div>`;
 
   // Standings view. On phones: team, record, points per game and luck.
-  const regAvg = (d, t) => mean(Object.entries(t.scores).filter(([w]) => +w < d.playoffStart).map(([, p]) => p));
+  const regAvg = t => mean(Object.entries(t.scores).filter(([w]) => +w < d.playoffStart).map(([, p]) => p));
   const seeds = d.league.settings.playoff_teams || 6;
   const stdTable = `<div class="scroll"><table class="t">
     <thead><tr><th scope="col">#</th><th scope="col" class="l">Team</th><th scope="col">Record</th>${d.leagueAvg ? '<th scope="col" class="opt">H2H</th><th scope="col" class="opt">vs Median</th>' : ''}<th scope="col" class="opt">PF</th><th scope="col" title="Points per regular-season game">Avg</th><th scope="col" class="opt">PA</th><th scope="col" class="opt" title="Record if you played every team every week">All-play</th><th scope="col" title="Head-to-head wins compared with what your all-play rate predicts">Luck</th></tr></thead><tbody>
     ${c.list.map((t, i) => `<tr data-tid="${t.id}" class="${i === seeds - 1 ? 'cut' : ''}"><td class="rkc"><span class="rk">${i + 1}</span></td><td class="l">${teamCell(t)}</td>
       <td class="big">${rec(t)}${t.t ? '-' + t.t : ''}</td>${d.leagueAvg ? `<td class="opt">${t.w}-${t.l}${t.t ? '-' + t.t : ''}</td><td class="opt">${t.mw}-${t.ml}</td>` : ''}
-      <td class="opt">${f2(t.pf)}</td><td>${f2(regAvg(d, t))}</td><td class="opt">${f2(t.pa)}</td><td class="opt">${t.apW}-${t.apL}</td>
+      <td class="opt">${f2(t.pf)}</td><td>${f2(regAvg(t))}</td><td class="opt">${f2(t.pa)}</td><td class="opt">${t.apW}-${t.apL}</td>
       <td class="${t.luck > 0.5 ? 'up' : t.luck < -0.5 ? 'down' : 'muted'}">${t.luck >= 0 ? '+' : ''}${f1(t.luck)}</td></tr>`).join('')}
   </tbody></table></div><div class="note">The heavy line is the playoff cut.</div>`;
 
