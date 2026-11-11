@@ -29,7 +29,7 @@
     :root {
       --paper: #14130f; --paper-2: #1e1c18; --card: #1a1915; --ink: #ece6d8; --ink-2: #cbc3b2; --muted: #a0988a;
       --rule: #ece6d8; --hair: #312d27; --hair-2: #4a443b; --bar: #b9b09e;
-      --you: #bba3f0; --you-bg: #2a2338; --gold: #e8bc45; --gold-bar: #c99a22; --gold-bg: #2e2612;
+      --you: #bba3f0; --you-bg: #2a2338; --gold: #e8bc45; --gold-bar: #c99a22; --gold-bg: #2b2516;
       --up: #74c389; --down: #ec8466;
       --strip: #0a0907; --strip-ink: #ece6d8; --strip-line: rgb(255 255 255 / .09);
     }
@@ -58,19 +58,21 @@
 
   /* Header */
   .mast { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px 20px; flex-wrap: wrap; padding: 18px 0 14px; }
-  .mast h1 { font: 900 clamp(30px, 4.4vw, 46px)/1 var(--serif); letter-spacing: -0.022em; margin: 0; }
+  .mast h1 { font: 900 clamp(28px, 4.4vw, 46px)/1 var(--serif); letter-spacing: -0.022em; margin: 0; }
   .mast .meta { font-size: 13px; color: var(--muted); margin-top: 6px; font-variant-numeric: tabular-nums; }
   .mast .meta .live { color: var(--down); font-weight: 600; }
   .mast .meta .live::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: currentColor; margin-right: 5px; vertical-align: 1px; }
-  .ctl { display: flex; gap: 6px; align-items: center; }
-  .ctl select, .ctl button, .btn, .sel { font: 500 14px/1 var(--sans); color: var(--ink); background: var(--card); border: 1px solid var(--hair-2);
-    border-radius: 6px; min-height: 38px; padding: 0 10px; cursor: pointer; }
-  .ctl select.unset { border-color: var(--you); }
-  #refresh { width: 38px; padding: 0; font-size: 17px; }
+  .ctl select, .btn, .sel { font: 500 14px/1 var(--sans); color: var(--ink); background: var(--card); border: 1px solid var(--hair-2);
+    border-radius: 6px; min-height: 40px; padding: 0 10px; cursor: pointer; }
+  #mine { min-width: 200px; }
+  /* A text-style button: "Back to 2026", "Copy recap". */
+  .lnk { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .lnk.small { font-size: 13px; color: var(--ink-2); min-height: 44px; }
+  .t .lnk { min-height: 40px; }
   @media (max-width: 640px) {
-    .mast { padding: 14px 0 10px; align-items: center; }
-    .ctl { width: 100%; }
-    #mine { flex: 1; min-width: 0; }
+    .mast { padding: 12px 0 10px; align-items: stretch; flex-direction: column; gap: 10px; }
+    .mast .meta { margin-top: 4px; }
+    #mine { width: 100%; }
   }
   nav.tabs { position: sticky; top: 0; z-index: 5; background: var(--paper); display: flex; gap: 6px;
              border-top: 2px solid var(--rule); border-bottom: 1px solid var(--hair-2); }
@@ -98,6 +100,7 @@
   .sec-h h2 { font: 700 25px/1.15 var(--serif); letter-spacing: -0.01em; margin: 0; }
   .sec-h .dek { color: var(--muted); font-size: 14px; }
   .sec-h .act { margin-left: auto; }
+  #app > .sec:first-child > .sec-h, #app > .cols > div > .o:first-child > .sec:first-child > .sec-h { border-top: 0; padding-top: 0; }
   .sub-h { font: 700 18px/1.25 var(--serif); margin: 26px 0 8px; }
   .cols { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 0 40px; align-items: start; }
   .cols.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -112,15 +115,12 @@
   details.how { margin-top: 14px; font-size: 13px; color: var(--muted); max-width: 75ch; }
   details.how summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 12px 0; min-height: 44px; box-sizing: border-box; }
   details.how p { margin: 4px 0 8px; }
-  .seg { display: inline-flex; border: 1px solid var(--hair-2); border-radius: 6px; overflow: hidden; }
-  .seg button { font: 600 13px/1 var(--sans); color: var(--muted); background: transparent; border: 0; padding: 0 12px; min-height: 40px; cursor: pointer; }
-  .seg button + button { border-left: 1px solid var(--hair-2); }
-  .seg button.on { background: var(--ink); color: var(--paper); }
 
   /* Your team, everywhere */
   [data-tid].me:not(tr):not(.bt):not(.gl) .nm, span[data-tid].me { color: var(--you); font-weight: 700; }
-  .t tr.me td, .race tr.me td, .gl.me, .stk.me, .bt.me { background: var(--you-bg); }
-  .t tr.me td:first-child, .race tr.me td:first-child { box-shadow: inset 3px 0 0 var(--you); }
+  .t tr.me td, .gl.me, .bt.me, .pot li.me { background: var(--you-bg); }
+  .t tr.me td:first-child, .pot li.me { box-shadow: inset 3px 0 0 var(--you); }
+  .pot li.me, .pot ol.led li.me { margin: 0 -10px; padding-left: 10px; padding-right: 10px; }
   .mine { margin-top: 22px; padding: 14px 16px; background: var(--you-bg); border-left: 4px solid var(--you); }
   .mine .who { font: 700 22px/1.2 var(--serif); }
   .mine .row { display: flex; flex-wrap: wrap; gap: 8px 30px; margin-top: 8px; }
@@ -128,7 +128,8 @@
   .mine .stat .v { font: 700 26px/1.05 var(--cond); font-variant-numeric: tabular-nums; }
   .mine .stat .s { font-size: 13px; color: var(--ink-2); }
   .mine .need { margin: 10px 0 0; font: 400 16px/1.4 var(--serif); }
-  @media (max-width: 600px) { .mine .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; gap: 10px 14px; } .mine .stat { min-width: 0; } .mine .stat .v { font-size: 22px; overflow-wrap: anywhere; } .mine .stat.wide { grid-column: span 2; } }
+  @media (max-width: 600px) { .mine { padding: 10px 12px; } .mine .who { font-size: 19px; } .mine .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; gap: 8px 12px; margin-top: 6px; }
+    .mine .stat { min-width: 0; } .mine .stat .k, .mine .stat .s { font-size: 12px; line-height: 1.3; } .mine .stat .v { font-size: 20px; overflow-wrap: anywhere; } .mine .stat.wide { grid-column: span 2; } .mine .need { font-size: 14px; margin-top: 8px; } }
 
   /* The pot: this week's high-score race */
   .pot { background: var(--gold-bg); border-top: 3px solid var(--gold-bar); padding: 14px 16px 12px; }
@@ -138,35 +139,52 @@
   .pot-h .st { font-size: 13px; color: var(--muted); width: 100%; }
   .pot ol { list-style: none; margin: 10px 0 0; padding: 0; }
   .pot li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid color-mix(in srgb, var(--gold-bar) 35%, transparent); font-variant-numeric: tabular-nums; }
-  .pot li .n { width: 1.2em; color: var(--muted); font-size: 13px; }
+  .pot li .n { width: 1.2em; flex: none; color: var(--muted); font-size: 13px; }
   .pot li .team { flex: 1; min-width: 0; }
   .pot li .pts { font: 700 20px/1 var(--cond); }
-  .pot li.top .pts { color: var(--gold); font-size: 26px; }
-  .pot li .pct { min-width: 3em; text-align: right; font: 600 16px/1 var(--cond); color: var(--ink); }
-  .pot .foot a { white-space: nowrap; }
-  .pot .foot { font-size: 13px; color: var(--ink-2); margin-top: 8px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--gold-bar) 35%, transparent); }
+  .pot ol.live li.top .pts { color: var(--gold); font-size: 26px; }
+  .pot ol:not(.live) li .pts { color: var(--ink-2); }
+  .pot li .pct { width: 52px; flex: none; text-align: right; font: 600 16px/1 var(--cond); color: var(--ink); }
+  .pot .cols-h { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; font: 600 11px/1 var(--cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .pot .cols-h + ol { margin-top: 4px; }
+  .pot .cols-h span:last-child { width: 52px; text-align: right; }
+  .pot .foot { font-size: 14px; color: var(--ink-2); margin-top: 4px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--gold-bar) 35%, transparent); }
+  .pot .foot b { font-weight: 700; color: var(--ink); }
+  .pot .foot b.money { color: var(--gold); }
+  /* The ledger: every settled week's winner, newest first. */
+  .pot .led-h { font: 700 17px/1.2 var(--serif); margin: 18px 0 0; }
+  .pot .race + .led-h { margin-top: 20px; padding-top: 14px; border-top: 2px solid color-mix(in srgb, var(--gold-bar) 55%, transparent); }
+  .pot ol.led { margin-top: 6px; }
+  .pot ol.led li { padding: 6px 0; gap: 10px; }
+  .pot ol.led .wk { width: 2.6em; flex: none; font: 600 14px/1 var(--cond); color: var(--muted); letter-spacing: .02em; }
+  .pot ol.led .who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .pot ol.led .pts { font: 600 17px/1 var(--cond); color: var(--ink); }
+  .pot ol.led .paid { width: 52px; flex: none; text-align: right; font: 700 17px/1 var(--cond); color: var(--gold); }
+  .pot ol.led .split { font-size: 12px; color: var(--muted); }
+  .pot details.more summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--ink-2); padding: 10px 0; min-height: 40px; box-sizing: border-box; border-top: 1px solid color-mix(in srgb, var(--gold-bar) 35%, transparent); }
+  .pot details.more[open] summary { display: none; }
+  .pot details.more ol.led { margin-top: 0; }
+  #money { scroll-margin-top: 60px; }
 
   /* Scoreboard boxes: live games and past results */
   .boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .boxes .box { display: flex; flex-direction: column; }
+  .boxes.games { gap: 20px 12px; padding-top: 8px; }
   .boxes.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   @media (max-width: 880px) { .boxes.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 600px) { .boxes, .boxes.three { grid-template-columns: minmax(0, 1fr); } }
   .box { background: var(--card); border: 1px solid var(--hair); min-width: 0; }
+  .box { position: relative; }
   .box.big { border-color: var(--ink-2); }
-  .box .pad { height: 10px; }
-  .box.nocap .cap { visibility: hidden; }
-  @media (max-width: 600px) { .box.nocap .cap { display: none; } }
-  .box.mygame { border-color: var(--you); }
-  .box .cap { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); padding: 7px 12px 0; }
-  .box .cap b { color: var(--ink); font-weight: 700; }
+  .box.mygame { border-color: var(--you); border-width: 2px; }
+  /* Caption sits on the top border like a label, so boxes side by side stay the same height. */
+  .box .cap { position: absolute; top: -8px; left: 9px; right: 9px; display: flex; justify-content: space-between; pointer-events: none;
+              font: 700 11px/16px var(--cond); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+  .box .cap > * { background: var(--paper); padding: 0 4px; }
+  .box .cap:empty { display: none; }
   .box.mygame .cap b { color: var(--you); }
-  .gl { display: flex; align-items: center; gap: 10px; padding: 7px 12px; font-variant-numeric: tabular-nums; }
-  .gl + .gl, .stk + .gl { border-top: 1px solid var(--hair); }
-  /* Under a team line: its playoff odds after each result. Name-aligned (12px pad + 26px avatar + 9px gap). */
-  .stk { font-size: 12px; line-height: 1.3; color: var(--muted); padding: 0 12px 7px 47px; margin-top: -3px; font-variant-numeric: tabular-nums; }
-  .stk.none { color: transparent; }
-  @media (max-width: 600px) { .stk.none { display: none; } }
+  .box .cap span { color: var(--muted); margin-left: auto; }
+  .gl { display: flex; align-items: center; gap: 10px; padding: 9px 12px; min-height: 48px; font-variant-numeric: tabular-nums; }
+  .gl + .gl { border-top: 1px solid var(--hair); }
   .gl .team { flex: 1; min-width: 0; }
   .gl .team .nm { font-weight: 500; }
   .gl.ahead .team .nm { font-weight: 700; }
@@ -179,17 +197,6 @@
   .gl .sc.hi { color: var(--gold); } .gl .sc.lo { color: var(--down); }
   .box .foot { font-size: 12px; color: var(--muted); padding: 0 12px 9px; }
 
-  /* Odds list */
-  .race { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
-  .race th { font: 600 12px/1.2 var(--cond); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: right; padding: 0 0 6px 8px; border-bottom: 1px solid var(--rule); }
-  .race th:first-child { text-align: left; padding-left: 0; }
-  .race td { padding: 6px 0 6px 8px; border-bottom: 1px solid var(--hair); text-align: right; white-space: nowrap; }
-  .race td:first-child { text-align: left; padding-left: 6px; white-space: normal; }
-  .race td.b { width: 26%; }
-  @media (max-width: 600px) { .race .b { display: none; } }
-  .race td.p { font-weight: 600; width: 4.2em; }
-  .race .cutnote td { border: 0; font-size: 12px; color: var(--muted); text-align: left; padding: 4px 0 0; }
-
   /* Recap */
   .lead h3 { font: 800 clamp(28px, 3.6vw, 40px)/1.06 var(--serif); letter-spacing: -0.015em; margin: 2px 0 10px; text-wrap: balance; }
   .lead p { font: 400 18px/1.45 var(--serif); color: var(--ink-2); margin: 0; }
@@ -199,7 +206,6 @@
   .brief { padding: 12px 0 13px; border-bottom: 1px solid var(--hair); }
   .brief h4 { font: 700 18px/1.25 var(--serif); margin: 0 0 4px; text-wrap: balance; }
   .brief p { margin: 0; font-size: 14px; color: var(--ink-2); }
-  .recap-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; font-size: 13px; color: var(--muted); }
 
   /* Playoff bracket */
   .bracket { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 0 24px; }
@@ -237,6 +243,8 @@
   .t td.wrap { white-space: normal; }
   .t tr.cut td { border-bottom: 2px solid var(--rule); }
   .t .strong { font-weight: 700; }
+  .wk-h { font-size: 14px; color: var(--ink-2); margin: 0 0 10px; }
+  .wk-h b { color: var(--ink); }
   .t td.big { font: 700 18px/1 var(--cond); }
   .t td.dim { color: var(--ink-2); }
   @media (max-width: 600px) {
@@ -244,10 +252,12 @@
     .t th, .t td { padding: 8px 6px; }
     .t td.l .team { max-width: 10.5em; }
     .t td.l .nm { white-space: normal; }
+    .t.std .own, .t.std .own + br, .opt-note { display: none; }
   }
   .rk { display: inline-block; width: 1.6em; color: var(--muted); font-variant-numeric: tabular-nums; }
   td.rkc { width: 2.4em; text-align: center !important; line-height: 1.1; }
   td.rkc .rk { display: block; width: auto; font: 700 18px/1 var(--cond); color: var(--ink); }
+  .t td .mv { font-size: 12px; font-weight: 600; }
   td.rkc .mv { display: block; font-size: 11px; font-weight: 600; margin-top: 2px; }
   .team { display: inline-flex; align-items: center; gap: 9px; vertical-align: middle; text-align: left; }
   .team img, .team .ph { width: 26px; height: 26px; border-radius: 50%; flex: none; object-fit: cover; }
@@ -262,10 +272,6 @@
   .cellbar .bar { flex: 1; max-width: 110px; }
   .cellbar span { min-width: 3em; text-align: right; }
   @media (max-width: 600px) { .cellbar .bar { display: none; } }
-  /* Money */
-  .tally { display: flex; flex-wrap: wrap; gap: 8px 36px; margin-bottom: 16px; }
-  .tally .v { font: 700 34px/1 var(--cond); font-variant-numeric: tabular-nums; }
-  .tally .k { font-size: 13px; color: var(--muted); }
 
   /* Trades */
   .trade { border-bottom: 1px solid var(--hair); padding: 12px 0; display: grid; grid-template-columns: 80px 1fr; gap: 12px; }
@@ -275,15 +281,16 @@
   @media (max-width: 600px) { .trade { grid-template-columns: 1fr; gap: 4px; } }
 
   /* This week on phones: the two columns dissolve into one list so the blocks can be ordered.
-     Between weeks: pot, recap, games, odds. While games are played: games, pot, odds, recap. Playoffs: as written. */
+     Between weeks: pot, recap, games. While games are played: games, pot, recap. Playoffs: as written. */
   @media (max-width: 880px) {
     .cols.week > div { display: contents; }
-    .cols.week.pre .o-pot { order: 1; } .cols.week.pre .o-recap { order: 2; } .cols.week.pre .o-games { order: 3; } .cols.week.pre .o-odds { order: 4; }
-    .cols.week.live .o-games { order: 1; } .cols.week.live .o-pot { order: 2; } .cols.week.live .o-odds { order: 3; } .cols.week.live .o-recap { order: 4; }
+    .cols.week.pre .o-pot { order: 1; } .cols.week.pre .o-recap { order: 2; } .cols.week.pre .o-games { order: 3; }
+    .cols.week.live .o-games { order: 1; } .cols.week.live .o-pot { order: 2; } .cols.week.live .o-recap { order: 3; }
+    .cols.week .o > .sec { margin-top: 40px; }
     .cols.week.pre .o-pot > .sec, .cols.week.pre:not(:has(.o-pot)) .o-recap > .sec, .cols.week.live .o-games > .sec, .cols.week.ps .o-games > .sec { margin-top: 24px; }
+    .cols.week .o > .sec > .sec-h { border-top: 1px solid var(--rule); padding-top: 10px; }
+    .cols.week.pre .o-recap > .sec > .sec-h, .cols.week.live .o-games > .sec > .sec-h, .cols.week.ps .o-games > .sec > .sec-h { border-top: 0; padding-top: 0; }
   }
-  .phone-only { display: none; }
-  @media (max-width: 880px) { .phone-only { display: block; } .desk-only { display: none; } }
 </style>
 </head>
 <body>
@@ -291,12 +298,11 @@
 <div class="wrap">
   <header class="mast">
     <div><h1 id="title">The League Ledger</h1><div class="meta" id="meta">Loading</div></div>
-    <div class="ctl"><select id="mine" aria-label="Your team"><option value="">Pick your team</option></select><select id="season" aria-label="Season"></select><button id="refresh" type="button" aria-label="Refresh" title="Refresh">&#8635;</button></div>
+    <div class="ctl"><select id="mine" aria-label="Your team"><option value="">Pick your team</option></select></div>
   </header>
   <nav class="tabs" id="tabs">
     <a href="#week" data-tab="week"><span>This week</span></a>
     <a href="#table" data-tab="table"><span>Table</span></a>
-    <a href="#money" data-tab="money"><span>Money</span></a>
     <a href="#managers" data-tab="managers"><span>Managers</span></a>
     <a href="#history" data-tab="history"><span>History</span></a>
   </nav>
@@ -344,9 +350,9 @@ const pct = (p, exact) => {
 // Playoff odds text: proven clinches/eliminations beat simulated percentages.
 const oddsTxt = (odds, id) => odds.final ? (odds.made[id] ? 'In' : '<span class="muted">Out</span>') : odds.clinched.has(id) ? 'Clinched' : odds.eliminated.has(id) ? 'Eliminated' : pct(odds.made[id]);
 
-const TABS = ['week', 'table', 'money', 'managers', 'history'];
-// Old tab links still land in the right place.
-const TAB_ALIAS = { front: 'week', rankings: 'table', standings: 'table' };
+const TABS = ['week', 'table', 'managers', 'history'];
+// Old tab links still land in the right place. #money opens This week at the high-score card.
+const TAB_ALIAS = { front: 'week', rankings: 'table', standings: 'table', money: 'week' };
 const tabFromHash = () => { const t = location.hash.slice(1); return TABS.includes(t) ? t : TAB_ALIAS[t] || 'week'; };
 const state = { chain: [], chainDone: Promise.resolve(), cache: {}, cur: null, tab: tabFromHash(), history: null };
 const margin = g => Math.abs(g.pa - g.pb);
@@ -1034,11 +1040,6 @@ function headlines(b) {
         p: `To ${oddsTxt(after, sw.id)} after Week ${W}, with a ${t.totW}-${t.totL} record.` });
     }
   }
-  if (power.history.length > 1) {
-    const cur = power.history.at(-1).rows, prev = power.history.at(-2).rows;
-    const mv = cur.map(r => ({ r, m: (prev.find(z => z.id === r.id)?.rank ?? r.rank) - r.rank })).sort((a, b) => b.m - a.m)[0];
-    if (mv && mv.m >= 3) out.push({ s: 30 + mv.m * 3, ids: [mv.r.id], k: 'Power rankings', h: `${N(mv.r.id)} jumped ${mv.m} spots to No. ${mv.r.rank}`, p: `Power score ${f1(mv.r.score)} of 100.` });
-  }
   money();
   return out.sort((a, b) => b.s - a.s);
 }
@@ -1058,11 +1059,6 @@ const bar = (p, cls = '') => `<div class="bar ${cls}"><i style="width:${Math.max
 const rec = t => `${t.totW}-${t.totL}`;
 // Method detail lives behind a "How this works" toggle; `key` keeps it open across live refreshes.
 const how = (key, ...paras) => `<details class="how" data-k="${key}"><summary>How this works</summary>${paras.filter(Boolean).map(p => `<p>${p}</p>`).join('')}</details>`;
-// Two or more views of one section, switched by buttons. The picked view survives live refreshes.
-state.seg = state.seg || {};
-const seg = (key, opts) => { const cur = state.seg[key] || opts[0][0];
-  return `<span class="seg" role="group">${opts.map(([v, label]) => `<button type="button" data-seg="${key}" data-v="${v}" class="${v === cur ? 'on' : ''}" aria-pressed="${v === cur}">${label}</button>`).join('')}</span>`; };
-const segView = (key, v, first, html) => `<div data-seg-of="${key}" data-v="${v}" ${(state.seg[key] || first) === v ? '' : 'hidden'}>${html}</div>`;
 function setLoading(msg) { $('#app').innerHTML = `<div class="loading">${esc(msg)}</div>`; }
 
 // ============================== STRIP & MAST ==============================
@@ -1073,12 +1069,14 @@ function renderChrome(b) {
   const wk = d.complete ? 'Final' : d.liveWeek ? `Week ${d.liveWeek}` : d.weeks.length ? `After Week ${d.weeks.at(-1)}` : 'Preseason';
   const liveNow = d.liveWeek && regRows(d, d.liveWeek).some(r => r.points > 0);
   const upd = b.updated ? `updated ${b.updated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : '';
-  $('#meta').innerHTML = `${d.league.season} · ${wk}${liveNow ? ' · <span class="live">Live</span>' : ''}${upd ? ` · <span id="updated" aria-live="polite">${upd}</span>` : ''}`;
+  // A past season (opened from History) says so, with the way back.
+  const newest = state.chain[0], past = newest && d.league.league_id !== newest.id;
+  $('#meta').innerHTML = `${d.league.season} · ${wk}${liveNow ? ' · <span class="live">Live</span>' : ''}${upd && !past ? ` · <span id="updated" aria-live="polite">${upd}</span>` : ''}${
+    past ? ` · <button type="button" class="lnk" data-season="${esc(newest.id)}">Back to ${esc(newest.season)}</button>` : ''}`;
   const mine = $('#mine'), uid = myUid();
   mine.innerHTML = '<option value="">Pick your team</option>' + Object.values(d.teams).filter(t => t.uid).sort((x, y) => x.name.localeCompare(y.name))
     .map(t => `<option value="${esc(t.uid)}">${esc(t.name)}</option>`).join('');
   mine.value = Object.values(d.teams).some(t => t.uid === uid) ? uid : '';
-  mine.classList.toggle('unset', !mine.value);
   // Scoreboard strip: live scores for readers on the other tabs, only while games are being played.
   // This week leaves it out, since its game boxes show the same scores.
   const pairs = liveNow && state.tab !== 'week' ? pairsOf(regRows(d, d.liveWeek)) : [];
@@ -1097,7 +1095,7 @@ function renderChrome(b) {
 
 // ============================== THIS WEEK ==============================
 // Lead story plus briefs, without telling the same game twice, two stories on one theme, or two on one team.
-const STORY_TOPIC = { 'Playoff race': 'move', 'Power rankings': 'move' };
+const STORY_TOPIC = { 'Playoff race': 'move' };
 function pickStories(heads, n = 5) {
   const per = {}, topics = new Set(), games = [], out = [];
   for (const h of heads) {
@@ -1120,86 +1118,77 @@ function tabWeek(b) {
   const ps = power.playoffs, odds = power.odds;
   const liveNow = !ps && d.liveWeek && d.liveWeek === odds.firstWeek && regRows(d, d.liveWeek).some(r => r.points > 0);
   const games = ps ? bracketSection(b) : gamesSection(b);
-  const pot = potBlock(b), oddsHtml = oddsBlock(b), stories = recapSection(b, !!pot);
-  // Desktop: games and recap on the left, the pot and the odds on the right. While games are being played they lead;
+  const pot = potBlock(b), stories = recapSection(b, !!pot);
+  // Desktop: games and recap on the left, the money card on the right. While games are being played they lead;
   // between weeks, last week's recap leads. On phones the columns dissolve and CSS orders the blocks by the mode class:
-  // between weeks pot, recap, games, odds; while games are played games, pot, odds, recap; in the playoffs as written.
-  // The odds are written twice and CSS shows one, since the phone order can't come from the two columns.
+  // between weeks pot, recap, games; while games are played games, pot, recap; in the playoffs as written.
   const blk = (k, h) => h ? `<div class="o o-${k}">${h}</div>` : '';
   const [first, second] = liveNow || ps ? [blk('games', games), blk('recap', stories)] : [blk('recap', stories), blk('games', games)];
-  const left = `${first}${oddsHtml ? `<div class="o o-odds phone-only">${oddsHtml}</div>` : ''}${second}`;
-  const right = `${pot ? `<div class="o o-pot"><section class="sec">${pot}</section></div>` : ''}${oddsHtml ? `<div class="desk-only">${oddsHtml}</div>` : ''}`;
+  const right = pot ? `<div class="o o-pot"><section class="sec" aria-label="High-score money">${pot}</section></div>` : '';
   const cls = `cols week ${ps ? 'ps' : liveNow ? 'live' : 'pre'}`;
-  if (!oddsHtml) return (myTeamCard(b) || '') + `<div class="${cls}"><div>${first}</div><div>${right}</div></div>${second}`;
-  return (myTeamCard(b) || '') + `<div class="${cls}"><div>${left}</div><div>${right}</div></div>`;
+  return (myTeamCard(b) || '') + `<div class="${cls}"><div>${first}${second}</div><div>${right}</div></div>`;
 }
 
-// This week's high-score race: who's leading the $ right now, or who's projected to, plus the season's money leaders.
+// The money, in one card: this week's high-score race, then every settled week's winner (newest first), then the season's totals.
+const LEDGER_SHOWN = 5;
 function potBlock(b) {
   const { d, c, power } = b, odds = power.odds, pay = CONFIG.highScorePayout;
   // A playoff week shows its live race only when playoff weeks pay (points only: the odds don't simulate them).
   const liveW = d.liveWeek && (d.liveWeek < d.playoffStart || (CONFIG.payPlayoffWeeks && regRows(d, d.liveWeek).some(r => r.points > 0)));
   const w = liveW ? d.liveWeek : odds.firstWeek;
-  const lastPay = c.payouts.at(-1);
-  const earners = [...c.list].filter(t => t.winnings > 0).sort((x, y) => y.winnings - x.winnings);
+  const racing = !!w && (w < d.playoffStart || CONFIG.payPlayoffWeeks);
   const rankIn = (arr, v) => 1 + arr.filter(x => x > v + 1e-9).length;
-  const third = earners[2]?.winnings ?? 0;
-  const season = earners.length ? `Top earners: ${earners.filter((t, i) => i < 3 || t.winnings >= third).map(t => `<span data-tid="${t.id}">${esc(t.name)}</span> ${usd(t.winnings)}`).join(', ')}. <a href="#money">All payouts</a>` : '';
-  const last = lastPay ? `Week ${lastPay.week}: ${lastPay.winners.map(id => `<span data-tid="${id}">${esc(d.teams[id].name)}</span>`).join(' and ')} ${lastPay.winners.length > 1 ? `split ${usd(CONFIG.highScorePayout)}` : `won ${usd(lastPay.each)}`} with ${f2(lastPay.score)}.` : '';
-  if (!w || (w >= d.playoffStart && !CONFIG.payPlayoffWeeks)) {
-    if (!earners.length) return '';
-    return `<div class="pot"><div class="pot-h"><span class="amt">${usd(c.payouts.length * pay)}</span><span class="what">paid out this season</span></div>
-      <ol>${earners.filter((t, i) => i < 6 || t.winnings >= earners[5].winnings).map(t => { const r = rankIn(earners.map(x => x.winnings), t.winnings);
-        return `<li data-tid="${t.id}" class="${r === 1 ? 'top' : ''}"><span class="n">${r}</span>${teamCell(t, false)}<span class="pts">${usd(t.winnings)}</span></li>`; }).join('')}</ol>
-      <div class="foot"><a href="#money">All payouts</a></div></div>`;
+  const paid = c.payouts.length * pay;
+  let race = '';
+  if (racing) {
+    const rows = regRows(d, w), live = rows.some(r => r.points > 0), m = odds.firstWeek === w ? odds.firstModel : null;
+    const list = live ? rows.map(r => ({ id: r.roster_id, v: r.points ?? 0 }))
+      : m ? Object.keys(d.teams).map(Number).map(id => ({ id, v: m.mu[id] })).filter(x => x.v != null) : [];
+    list.sort((x, y) => y.v - x.v);
+    // Each team's chance of finishing as the week's top scorer, from the same simulations as the odds. Without
+    // projections the simulation can't lock in live points, so no % then.
+    const top = list.length && m ? odds.top : null;
+    // The top three (with ties). During games, also anyone further down who still shows a real chance at the $.
+    const shown = list.filter((x, i) => i < 3 || x.v >= list[2].v - 1e-9 || (live && Math.round((top?.[x.id] ?? 0) * 100) >= 10));
+    const st = (live ? `Live. The highest score when Week ${w} ends wins ${usd(pay)}.` : `The highest score in Week ${w} wins ${usd(pay)}.`) + (top ? ' Chance: odds of finishing on top.' : '');
+    race = `<div class="pot-h"><span class="amt">${usd(pay)}</span><span class="what">Week ${w} high score</span><span class="st">${st}</span></div>
+      ${list.length ? `<div class="cols-h"><span>${live ? 'Score' : 'Expected'}</span>${top ? '<span>Chance</span>' : ''}</div>
+      <ol class="race ${live ? 'live' : ''}">${shown.map(x => { const r = rankIn(list.map(y => y.v), x.v);
+        return `<li data-tid="${x.id}" class="${r === 1 ? 'top' : ''}"><span class="n">${r}</span>${teamCell(d.teams[x.id], false)}<span class="pts">${live ? f2(x.v) : f1(x.v)}</span>${top ? `<span class="pct">${pct(top[x.id])}</span>` : ''}</li>`; }).join('')}</ol>` : ''}`;
+  } else if (c.payouts.length) {
+    race = `<div class="pot-h"><span class="amt">${usd(paid)}</span><span class="what">paid out in weekly high scores</span></div>`;
   }
-  const rows = regRows(d, w), live = rows.some(r => r.points > 0), m = odds.firstWeek === w ? odds.firstModel : null;
-  const list = live ? rows.map(r => ({ id: r.roster_id, v: r.points ?? 0 }))
-    : m ? Object.keys(d.teams).map(Number).map(id => ({ id, v: m.mu[id] })).filter(x => x.v != null) : [];
-  list.sort((x, y) => y.v - x.v);
-  // Each team's chance of finishing as the week's top scorer, from the same simulations as the odds. Without
-  // projections the simulation can't lock in live points, so no % then.
-  const top = list.length && m ? odds.top : null;
-  const st = [live ? `Live. The top score when the week ends wins ${usd(pay)}.` : m ? 'Projected scores before kickoff.' : '',
-    top ? "The % is each team's chance of finishing on top." : ''].filter(Boolean).join(' ');
-  // The top three (with ties). During games, also anyone further down who still shows a real chance at the $.
-  const shown = list.filter((x, i) => i < 3 || x.v >= list[2].v - 1e-9 || (live && Math.round((top?.[x.id] ?? 0) * 100) >= 10));
-  return `<div class="pot"><div class="pot-h"><span class="amt">${usd(pay)}</span><span class="what">Week ${w} high score</span><span class="st">${st}</span></div>
-    ${list.length ? `<ol>${shown.map(x => { const r = rankIn(list.map(y => y.v), x.v); return `<li data-tid="${x.id}" class="${r === 1 ? 'top' : ''}"><span class="n">${r}</span>${teamCell(d.teams[x.id], false)}<span class="pts ${live ? '' : 'muted'}">${live ? f2(x.v) : f1(x.v)}</span>${top ? `<span class="pct">${pct(top[x.id])}</span>` : ''}</li>`; }).join('')}</ol>` : ''}
-    <div class="foot">${[last, season].filter(Boolean).join('<br>')}</div></div>`;
+  const pays = [...c.payouts].reverse();
+  const ledRow = p => `<li data-tids="${p.winners.join(' ')}"><span class="wk">Wk ${p.week}</span>
+    <span class="who">${p.winners.map(id => teamCell(d.teams[id], false)).join('')}${p.winners.length > 1 ? `<span class="split">Tied: split ${usd(pay)}</span>` : ''}</span>
+    <span class="pts">${f2(p.score)}</span><span class="paid">${usd(p.each)}</span></li>`;
+  const rest = pays.slice(LEDGER_SHOWN);
+  const restLabel = rest.length === 1 ? `Show Week ${rest[0].week}` : `Show Weeks ${rest.at(-1)?.week}–${rest[0]?.week}`;
+  const ledger = pays.length ? `<h3 class="led-h">Weekly winners</h3><ol class="led">${pays.slice(0, LEDGER_SHOWN).map(ledRow).join('')}</ol>${
+    rest.length ? `<details class="more" data-k="ledger"><summary>${restLabel}</summary><ol class="led">${rest.map(ledRow).join('')}</ol></details>` : ''}` : '';
+  if (!race && !ledger) return '';
+  const earners = [...c.list].filter(t => t.winnings > 0).sort((x, y) => y.winnings - x.winnings || y.highs - x.highs);
+  const totalWeeks = (d.playoffStart - (d.league.settings.start_week || 1)) + (CONFIG.payPlayoffWeeks ? d.playoffWeeks : 0);
+  const left = Math.max(0, totalWeeks * pay - paid);
+  const foot = earners.length ? `<div class="foot">${racing ? `<b class="money">${usd(paid)}</b> paid so far${left ? ` · ${usd(left)} still to play for` : ''}<br>` : ''}${
+    earners.map(t => `<span data-tid="${t.id}">${esc(t.name)}</span>&nbsp;<b>${usd(t.winnings)}</b>`).join(' · ')}</div>` : '';
+  return `<div class="pot" id="money">${race}${ledger}${foot}</div>`;
 }
 
-// Last week's stories, deduped, with the copy-for-group-chat button.
+// Last week's stories (a lead and up to two briefs), deduped, with the copy-for-group-chat button.
 function recapSection(b, potShown) {
   const { d, power } = b;
-  // The pot beside it already shows last week's high score and the money leaders.
-  const stories = pickStories(potShown ? b.heads.filter(h => !/^(High score|The money)/.test(h.k)) : b.heads);
+  // The money card beside it already shows last week's high score and the money leaders.
+  const stories = pickStories(potShown ? b.heads.filter(h => !/^(High score|The money)/.test(h.k)) : b.heads, 3);
   if (!stories.length) return '';
   const [lead, ...rest] = stories;
   const lastWk = d.weeks.at(-1) ?? 0, ps = power.playoffs, reviewWk = ps && lastWk >= d.playoffStart ? lastWk : power.last;
   const body = `<article class="lead"><h3>${lead.h}</h3><p>${lead.p}</p></article>
-    ${rest.length ? `<div class="briefs">${rest.map(x => `<div class="brief"><h4>${x.h}</h4><p>${x.p}</p></div>`).join('')}</div>` : ''}
-    <div class="recap-row"><button type="button" class="btn" data-copy-recap>Copy recap for the group chat</button></div>`;
-  return sec(ps && lastWk >= d.playoffStart ? `${roundName(d, lastWk - d.playoffStart + 1)} recap` : `Week ${reviewWk} recap`, '', body);
+    ${rest.length ? `<div class="briefs">${rest.map(x => `<div class="brief"><h4>${x.h}</h4><p>${x.p}</p></div>`).join('')}</div>` : ''}`;
+  return sec(ps && lastWk >= d.playoffStart ? `${roundName(d, lastWk - d.playoffStart + 1)} recap` : `Week ${reviewWk} recap`, '', body,
+    `<button type="button" class="lnk small" data-copy-recap>${COPY_LABEL}</button>`);
 }
-
-// One odds table: playoff chances for every team, and title chances while the title is open.
-function oddsBlock(b) {
-  const { d, c, power } = b, odds = power.odds, ps = power.playoffs;
-  const titleOpen = odds.champ && !ps?.done;
-  const list = ps ? [...c.list].filter(t => !ps.out.has(t.id)).sort((x, y) => (odds.champ[y.id] ?? 0) - (odds.champ[x.id] ?? 0))
-    : [...c.list].sort((x, y) => odds.made[y.id] - odds.made[x.id] || y.totW - x.totW);
-  const showPO = !ps && !odds.final;
-  if (!list.length || (!showPO && !titleOpen)) return '';
-  // No cut line here: the list is sorted by odds, not seeding, so a line after the 6th row would read as the standings.
-  const rows = list.map(t => `<tr data-tid="${t.id}">
-    <td>${esc(t.name)} <span class="muted">${rec(t)}</span></td>
-    ${showPO ? `<td class="p">${oddsTxt(odds, t.id)}</td><td class="b">${bar(odds.made[t.id])}</td>` : ''}
-    ${titleOpen ? `<td class="${showPO ? '' : 'p'}">${champTxt(odds, power, t.id)}</td>` : ''}${!showPO && titleOpen ? `<td class="b">${bar(odds.champ[t.id] / Math.max(...list.map(x => odds.champ[x.id])))}</td>` : ''}</tr>`).join('');
-  const head = `<tr><th>Team</th>${showPO ? '<th>Playoffs</th><th class="b"></th>' : ''}${titleOpen ? `<th>Title</th>${showPO ? '' : '<th class="b"></th>'}` : ''}</tr>`;
-  const note = showPO ? `<tr class="cutnote"><td colspan="4">Sorted by playoff odds. The top ${odds.seeds} in the standings make it. <a href="#table">Full table</a></td></tr>` : '';
-  return sec(showPO ? 'Playoff odds' : 'Title odds', '', `<table class="race"><thead>${head}</thead><tbody>${rows}${note}</tbody></table>`);
-}
+const COPY_LABEL = 'Copy for the group chat';
 
 // Shown at the top once a team is picked in the header.
 function myTeamCard(b) {
@@ -1221,7 +1210,7 @@ function myTeamCard(b) {
     }
   } else if (!odds.final) {
     const dp = power.prevOdds ? odds.made[t.id] - power.prevOdds.made[t.id] : 0;
-    items.push(stat('Playoffs', oddsTxt(odds, t.id), Math.abs(dp) >= 0.005 ? `${dp > 0 ? 'Up' : 'Down'} ${Math.round(Math.abs(dp) * 100)} since last week` : ''));
+    items.push(stat('Playoffs', oddsTxt(odds, t.id), Math.abs(dp) >= 0.005 ? `${dp > 0 ? '+' : '−'}${Math.round(Math.abs(dp) * 100)} pt${Math.round(Math.abs(dp) * 100) === 1 ? '' : 's'} after Wk ${power.last}` : ''));
     if (odds.champ) items.push(stat('Title', champTxt(odds, power, t.id)));
   }
   const pair = power.playoffs ? null : odds.pair[t.id];
@@ -1260,7 +1249,7 @@ function needLine(odds, id) {
   return `<p class="need">${s}</p>`;
 }
 
-// This week's games as scoreboard boxes, biggest stakes first, each team with what this week's result means for its playoff odds.
+// This week's games as scoreboard boxes, biggest stakes first. What your own result means for your playoff odds is on the My team card.
 function gamesSection(b) {
   const { d, power } = b;
   const odds = power.odds;
@@ -1278,53 +1267,29 @@ function gamesSection(b) {
   const mi = games.findIndex(g => g.a === mine || g.b === mine);
   const moved = mi > 1;
   if (moved) games.splice(1, 0, ...games.splice(mi, 1));
-  const decidedG = g => { const pa = odds.pair[g.a].p; return live && (pa >= 0.999 || pa <= 0.001); };
-  // Each team's playoff odds after each possible result, for the line under it in its box. Left out once the game is
-  // decided, or when the result moves the odds less than 5 points (the My team card's test).
-  const stakesTxt = id => {
-    if (odds.clinched.has(id)) return 'Clinched';
-    if (odds.eliminated.has(id)) return 'Eliminated';
-    const k = odds.cond[id]; if (!k) return '';
-    const opts = k.med != null
-      ? [[2, '2-0'], [1, '1-1'], [0, '0-2']].map(([n, l]) => ({ l, v: k.rec[n].p >= 0.005 ? k.rec[n].made : null }))
-      : [{ l: 'Win', v: k.win }, { l: 'Lose', v: k.lose }];
-    const shown = opts.filter(o => o.v != null), vs = shown.map(o => o.v);
-    if (shown.length < 2 || Math.max(...vs) - Math.min(...vs) < 0.05) return '';
-    return 'Playoffs: ' + shown.map(o => `${o.l}&nbsp;→&nbsp;${pct(o.v)}`).join(' · ');
-  };
-  const stakesOf = Object.fromEntries(games.flatMap(g => [g.a, g.b].map(id => [id, decidedG(g) ? '' : stakesTxt(id)])));
-  const anyStakes = Object.values(stakesOf).some(Boolean);
-  // Rows are written even when empty (invisible on desktop, dropped on phones), so boxes side by side line up.
-  const stk = id => anyStakes ? `<div class="stk ${stakesOf[id] ? '' : 'none'}" data-tid="${id}">${stakesOf[id] || '&nbsp;'}</div>` : '';
   const box = (g, i) => {
     const pa = odds.pair[g.a].p, started = live && (ptsOf(g.a) > 0 || ptsOf(g.b) > 0);
-    const decided = decidedG(g);
+    const decided = live && (pa >= 0.999 || pa <= 0.001);
     const final = decided && m?.live?.[g.a] && m?.live?.[g.b] && m.sd[g.a] < 0.5 && m.sd[g.b] < 0.5;
     const my = g.a === mine || g.b === mine;
     const line = (id, p) => {
       const ahead = started ? ptsOf(id) >= ptsOf(id === g.a ? g.b : g.a) : p >= 0.5;
       // Live: points so far, with the projected final (points scored plus what's left to play) beneath.
       const sc = started ? `<span class="sc">${f2(ptsOf(id))}${m && !final ? `<small>proj ${f1(m.mu[id])}</small>` : ''}</span>`
-        : m ? `<span class="sc proj" title="Projected">${f1(m.mu[id])}</span>` : '';
+        : m ? `<span class="sc proj" title="Expected score">${f1(m.mu[id])}</span>` : '';
       const wp = decided ? (p >= 0.5 ? (final ? '✓' : '') : '') : pct(p);
       // Live: how many starters are still to play or playing now, under the name.
       const left = started && !final ? leftTxt(startersLeft(d, w, id)) : '';
       return `<div class="gl ${ahead ? 'ahead' : ''}" data-tid="${id}">${teamCell(d.teams[id], left)}${sc}<span class="wp">${wp}</span></div>`;
     };
-    const cap = i === 0 ? `Biggest game${my ? ' · yours' : ''}` : my ? 'Your game' : '';
+    const cap = i === 0 ? `Most at stake${my ? ' · yours' : ''}` : my ? 'Your game' : '';
     const capR = decided ? (final ? 'Final' : 'All but over') : '';
-    // Every box has a caption row (blank ones are invisible on desktop), so boxes side by side line up row for row.
-    return `<div class="box ${i === 0 ? 'big' : ''} ${my ? 'mygame' : ''} ${cap || capR ? '' : 'nocap'}"><div class="cap"><b>${cap || '&nbsp;'}</b><span>${capR}</span></div>
-      ${line(g.a, pa)}${stk(g.a)}${line(g.b, 1 - pa)}${stk(g.b)}<div class="pad"></div></div>`;
+    return `<div class="box ${i === 0 ? 'big' : ''} ${my ? 'mygame' : ''}"><div class="cap">${cap ? `<b>${cap}</b>` : ''}${capR ? `<span>${capR}</span>` : ''}</div>${line(g.a, pa)}${line(g.b, 1 - pa)}</div>`;
   };
-  const med = d.leagueAvg && games.some(g => odds.cond[g.a]?.med != null);
-  const dek = `${live ? 'Live scores' : 'Projected scores'} and win chances, biggest stakes first${moved ? ', then your game' : ''}.${anyStakes ? (med
-    ? ' Under each team: its playoff odds if it goes 2-0, 1-1 or 0-2 this week (matchup + median).'
-    : ' Under each team: its playoff odds if it wins or loses.') : ''}`;
-  return sec(`Week ${w} games`, dek, `<div class="boxes">${games.map(box).join('')}</div>` + how('stakes',
-    `Win chances come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the season${live ? ', with points already scored locked in' : ''}. The biggest game is the one expected to move both teams' playoff odds the most; the order is set before kickoff.`,
-    anyStakes && (med ? 'Each week has two wins up for grabs: the matchup and a top-half score. The line under each team is its playoff odds if it wins both (2-0), splits them (1-1) or loses both (0-2).'
-      : 'The line under each team is its playoff odds if it wins or loses this week.') + ' It\'s left out when the result would move them less than 5 points, and once the game is decided.'));
+  const dek = `${live ? 'Live scores' : 'Expected scores'} and win chances. The game with the most playoff odds riding on it is first${moved ? ', then yours' : ''}.`;
+  return sec(`Week ${w} games`, dek, `<div class="boxes games">${games.map(box).join('')}</div>`
+    + `<p class="note">Playoff odds for every team are in the <a href="#table">Table</a>.</p>`
+    + how('stakes', `Expected scores and win chances come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the season, blending each lineup's Sleeper projection with the team's season average${live ? ', with points already scored locked in' : ''}. The biggest game is the one expected to move both teams' playoff odds the most; the order is set before kickoff.`));
 }
 
 // Plain-text recap of the front-page stories, for pasting into the group chat.
@@ -1386,57 +1351,37 @@ function bracketSection(b) {
 // ============================== TABLE ==============================
 function tabTable(b) {
   const { d, c, power } = b;
-  if (!power) return sec('Table', '', '<p class="muted">Available after Week 1.</p>');
-  const { history, odds, prevOdds } = power;
+  if (!power) return sec('Standings', '', '<p class="muted">Available after Week 1.</p>');
+  const { history, odds } = power;
   const cur = history.at(-1).rows, prev = history.length > 1 ? history.at(-2).rows : null;
-  const showD = prevOdds && !odds.final;
   const nS = Object.keys(odds.sos || {}).length, showS = !odds.final && nS > 0;
   // Counted from whichever end is nearer: "Hardest", "3rd hardest", …, "2nd easiest", "Easiest".
   const sosTxt = id => { if (odds.sos[id] == null) return '<span class="muted">–</span>';
     const r = odds.sosRank[id], hard = r <= (nS + 1) / 2, n = hard ? r : nS + 1 - r;
     return `<span title="Remaining opponents average ${f1(odds.sos[id])} expected points">${n === 1 ? (hard ? 'Hardest' : 'Easiest') : `${ord(n)} ${hard ? 'hardest' : 'easiest'}`}</span>`; };
-
-  // Power view. On phones: rank and move, team (with record), power score, playoff and title odds.
-  const powerRows = cur.map(r => {
-    const t = d.teams[r.id], p = prev?.find(z => z.id === r.id), mv = p ? p.rank - r.rank : 0;
-    const move = !prev ? '' : mv > 0 ? `<span class="mv up">▲${mv}</span>` : mv < 0 ? `<span class="mv down">▼${-mv}</span>` : '<span class="mv muted">–</span>';
-    const po = odds.made[r.id], dp = prevOdds ? po - prevOdds.made[r.id] : 0;
-    const dTxt = Math.abs(dp) < 0.005 ? '<span class="muted">–</span>' : `<span class="${dp > 0 ? 'up' : 'down'}">${dp > 0 ? '+' : '−'}${Math.round(Math.abs(dp) * 100)}</span>`;
-    return `<tr data-tid="${r.id}"><td class="rkc"><span class="rk">${r.rank}</span>${move}</td><td class="l">${teamCell(t, `${rec(t)}${sameName(t.owner, t.name) ? '' : ` · ${esc(t.owner)}`}`)}</td>
-      <td class="dim">${f1(r.score)}</td>
-      <td><div class="cellbar"><span class="strong">${oddsTxt(odds, r.id)}</span>${bar(po)}</div></td>
-      ${showD ? `<td class="opt">${dTxt}</td>` : ''}${odds.byes ? `<td class="opt">${odds.final ? (odds.bye[r.id] ? 'Yes' : '<span class="muted">–</span>') : pct(odds.bye[r.id])}</td>` : ''}${odds.champ ? `<td>${champTxt(odds, power, r.id)}</td>` : ''}${showS ? `<td class="opt">${sosTxt(r.id)}</td>` : ''}</tr>`;
-  }).join('');
-  const powerTable = `<div class="scroll"><table class="t">
-    <thead><tr><th scope="col">#</th><th scope="col" class="l">Team</th><th scope="col" title="0–100: season all-play 50%, last three weeks 25%, record 25%">Power</th><th scope="col">Playoffs</th>${showD ? '<th scope="col" class="opt" title="Change in playoff odds since last week, in points">vs last wk</th>' : ''}${odds.byes ? '<th scope="col" class="opt">Bye</th>' : ''}${odds.champ ? '<th scope="col">Title</th>' : ''}${showS ? '<th scope="col" class="opt" title="How tough the remaining opponents are">Schedule left</th>' : ''}</tr></thead>
-    <tbody>${powerRows}</tbody></table></div>`;
-
-  // Standings view. On phones: team, record, points per game and luck.
-  const regAvg = t => mean(Object.entries(t.scores).filter(([w]) => +w < d.playoffStart).map(([, p]) => p));
   const seeds = d.league.settings.playoff_teams || 6;
-  const stdTable = `<div class="scroll"><table class="t">
-    <thead><tr><th scope="col">#</th><th scope="col" class="l">Team</th><th scope="col">Record</th>${d.leagueAvg ? '<th scope="col" class="opt">H2H</th><th scope="col" class="opt">vs Median</th>' : ''}<th scope="col" class="opt">PF</th><th scope="col" title="Points per regular-season game">Avg</th><th scope="col" class="opt">PA</th><th scope="col" class="opt" title="Record if you played every team every week">All-play</th><th scope="col" title="Head-to-head wins compared with what your all-play rate predicts">Luck</th></tr></thead><tbody>
-    ${c.list.map((t, i) => `<tr data-tid="${t.id}" class="${i === seeds - 1 ? 'cut' : ''}"><td class="rkc"><span class="rk">${i + 1}</span></td><td class="l">${teamCell(t)}</td>
-      <td class="big">${rec(t)}${t.t ? '-' + t.t : ''}</td>${d.leagueAvg ? `<td class="opt">${t.w}-${t.l}${t.t ? '-' + t.t : ''}</td><td class="opt">${t.mw}-${t.ml}</td>` : ''}
-      <td class="opt">${f2(t.pf)}</td><td>${f2(regAvg(t))}</td><td class="opt">${f2(t.pa)}</td><td class="opt">${t.apW}-${t.apL}</td>
-      <td class="${t.luck > 0.5 ? 'up' : t.luck < -0.5 ? 'down' : 'muted'}">${t.luck >= 0 ? '+' : ''}${f1(t.luck)}</td></tr>`).join('')}
-  </tbody></table></div><div class="note">The heavy line is the playoff cut.</div>`;
-
-  const table = segView('table', 'power', 'power', powerTable) + segView('table', 'std', 'power', stdTable)
-    + how('table',
-      `Power is a 0–100 score: all-play win rate for the season (50%), all-play for the last three weeks (25%) and actual record including median games (25%). All-play is your record if you'd played every team every week. "Luck" is how many more head-to-head wins you have than that rate predicts.`,
-      !odds.final && `Playoff and title odds come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the real schedule${d.leagueAvg ? ', median games included' : ''}, seeded by wins then points for. Each team's expected score blends its Sleeper projection (${Math.round(PROJ_WEIGHT * 100)}%) with its season average, and the setup was tested against the league's 2020–2025 seasons. "Clinched" and "Eliminated" are certain.`,
-      showS && '"Schedule left" ranks how tough each team\'s remaining opponents are, from the hardest to the easiest.');
-  const view = state.seg.table || 'power';
+  const pw = Object.fromEntries(cur.map(r => [r.id, r]));
+  // Power: rank by power score, with places moved since last week.
+  const powerTxt = id => { const r = pw[id]; if (!r) return '<span class="muted">–</span>';
+    const p = prev?.find(z => z.id === id), mv = p ? p.rank - r.rank : 0;
+    return `<span title="Power score ${f1(r.score)} of 100">${r.rank}</span>${mv > 0 ? ` <span class="mv up">▲${mv}</span>` : mv < 0 ? ` <span class="mv down">▼${-mv}</span>` : ''}`; };
+  const rows = c.list.map((t, i) => `<tr data-tid="${t.id}" class="${i === seeds - 1 ? 'cut' : ''}"><td class="rkc"><span class="rk">${i + 1}</span></td><td class="l">${teamCell(t)}</td>
+      <td class="big">${rec(t)}${t.t ? '-' + t.t : ''}</td><td class="opt">${f2(t.pf)}</td><td class="opt">${powerTxt(t.id)}</td>
+      <td class="opt ${t.luck > 0.5 ? 'up' : t.luck < -0.5 ? 'down' : 'muted'}">${Math.abs(t.luck) < 0.05 ? '0.0' : `${t.luck > 0 ? '+' : '−'}${f1(Math.abs(t.luck))}`}</td>
+      <td><div class="cellbar"><span class="strong">${oddsTxt(odds, t.id)}</span>${odds.final ? '' : bar(odds.made[t.id])}</div></td>
+      ${odds.byes ? `<td class="opt">${odds.final ? (odds.bye[t.id] ? 'Yes' : '<span class="muted">–</span>') : pct(odds.bye[t.id])}</td>` : ''}${odds.champ ? `<td>${champTxt(odds, power, t.id)}</td>` : ''}${showS ? `<td class="opt">${sosTxt(t.id)}</td>` : ''}</tr>`).join('');
+  const table = `<div class="scroll"><table class="t std">
+    <thead><tr><th scope="col">#</th><th scope="col" class="l">Team</th><th scope="col" title="Wins and losses${d.leagueAvg ? ', including the weekly median game' : ''}">Record</th><th scope="col" class="opt" title="Points for">PF</th><th scope="col" class="opt" title="Rank by power score; ▲▼ places moved since last week">Power</th><th scope="col" class="opt" title="Wins above or below what your weekly scores would predict">Luck</th><th scope="col">Playoffs</th>${odds.byes ? '<th scope="col" class="opt">Bye</th>' : ''}${odds.champ ? '<th scope="col">Title</th>' : ''}${showS ? '<th scope="col" class="opt" title="How tough the remaining opponents are">Schedule left</th>' : ''}</tr></thead>
+    <tbody>${rows}</tbody></table></div><div class="note">The heavy line is the playoff cut.<span class="opt-note"> PF: points for. Power: rank by recent form and all-play record, ▲▼ places moved since last week. Luck: wins above (+) or below (−) what your weekly scores predict.</span></div>`;
   const oddsLive = d.liveWeek && d.liveWeek === odds.firstWeek && regRows(d, d.liveWeek).some(r => r.points > 0);
-  const dek = view === 'std'
-    ? `After Week ${power.last} · All-play: your record if you played every team every week · Luck: head-to-head wins above that`
-    : `After Week ${power.last}${oddsLive ? `; odds include live Week ${d.liveWeek} scores` : ''}${prev ? ' ·&nbsp;▲▼ places moved since last week' : ''} ·&nbsp;Power&nbsp;is&nbsp;0–100`;
-  return sec(view === 'std' ? 'Standings' : 'Power rankings', dek, table, seg('table', [['power', 'Power & odds'], ['std', 'Standings']]))
+  const dek = `After Week ${power.last}.${d.leagueAvg ? ' Records count the weekly median game, so each week is two results.' : ''} The top ${seeds} make the playoffs${oddsLive ? `; odds include live Week ${d.liveWeek} scores` : ''}.`;
+  return sec('Standings', dek, table + how('table',
+      !odds.final && `Playoff and title odds come from ${CONFIG.sims.toLocaleString()} simulations of the rest of the real schedule${d.leagueAvg ? ', median games included' : ''}, seeded by wins then points for. Each team's expected score blends its Sleeper projection (${Math.round(PROJ_WEIGHT * 100)}%) with its season average, and the setup was tested against the league's 2020–2025 seasons. "Clinched" and "Eliminated" are certain.`,
+      `On wider screens: Power ranks teams by a 0–100 score, made of all-play win rate for the season (50%), all-play for the last three weeks (25%) and actual record (25%). All-play is your record if you'd played every team every week. Luck is how many more head-to-head wins you have than that all-play rate predicts.${showS ? ' "Schedule left" ranks how tough each team\'s remaining opponents are.' : ''}`))
     + resultsByWeek(b);
 }
 
-// Every regular-season week's results as scoreboard boxes, one week at a time.
+// Every regular-season week's results as scoreboard boxes, one week at a time, led by who won that week's money.
 function resultsByWeek(b) {
   const { d, c, players } = b;
   const weeks = [...new Set(c.games.map(g => g.week))].sort((x, y) => y - x);
@@ -1450,40 +1395,16 @@ function resultsByWeek(b) {
       return `<div class="box">${line(win, a, true)}${line(lose, bb, false)}</div>`; }).join('');
     let star = null;
     for (const r of rows) (r.starters || []).forEach((pid, k) => { const p = r.starters_points?.[k] ?? 0; if (pid && pid !== '0' && (!star || p > star.p)) star = { pid, p, id: r.roster_id }; });
-    const note = star && players ? `<div class="note">Best start: ${esc(players[star.pid]?.n || 'Unknown player')}, ${f1(star.p)} for ${esc(d.teams[star.id].name)}.</div>` : '';
-    return `<div data-pick-of="week" data-v="${w}" ${i ? 'hidden' : ''}><div class="boxes three">${body}</div>${note}</div>`;
+    const pay = c.payouts.find(p => p.week === w);
+    const head = [pay && `<b>${pay.winners.map(id => esc(d.teams[id].name)).join(' and ')}</b> ${pay.winners.length > 1 ? 'split' : 'won'} the <span class="money">${usd(pay.each * pay.winners.length)}</span> with ${f2(pay.score)}`,
+      star && players && `Best start: ${esc(players[star.pid]?.n || 'Unknown player')}, ${f1(star.p)} for ${esc(d.teams[star.id].name)}`].filter(Boolean).join(' · ');
+    return `<div data-pick-of="week" data-v="${w}" ${i ? 'hidden' : ''}>${head ? `<p class="wk-h">${head}</p>` : ''}<div class="boxes three">${body}</div></div>`;
   }).join('');
   const pick = `<select class="sel" data-pick="week" aria-label="Week">${weeks.map(w => `<option value="${w}">Week ${w}</option>`).join('')}</select>`;
-  const legend = `<span class="money">Gold</span>: high score · <span class="down">Red</span>: low score${d.leagueAvg ? ' · +M: won the median&nbsp;game' : ''}`;
+  const legend = `<span class="down">Red</span>: the week's low score${d.leagueAvg ? ' · +M: also won the median&nbsp;game' : ''}`;
   return sec('Results', legend, blocks, pick);
 }
 
-
-// ============================== MONEY ==============================
-function tabMoney(b) {
-  const { d, c } = b;
-  const pay = CONFIG.highScorePayout;
-  const earners = [...c.list].filter(t => t.winnings > 0).sort((x, y) => y.winnings - x.winnings || y.highs - x.highs);
-  const zero = c.list.filter(t => !t.winnings);
-  const paid = c.payouts.length * pay;
-  const totalWeeks = (d.playoffStart - (d.league.settings.start_week || 1)) + (CONFIG.payPlayoffWeeks ? d.playoffWeeks : 0);
-  const left = Math.max(0, totalWeeks * pay - paid);
-  // Settled weeks only: the live race is in This week's pot.
-  const tally = `<div class="tally"><div><div class="v money">${usd(paid)}</div><div class="k">paid out</div></div><div><div class="v">${usd(left)}</div><div class="k">still to play for</div></div></div>`;
-  const table = earners.length ? `<div class="scroll"><table class="t">
-    <thead><tr><th scope="col" class="l">Team</th><th scope="col">Weekly highs</th><th scope="col">Won</th></tr></thead><tbody>
-    ${earners.map(t => `<tr data-tid="${t.id}"><td class="l">${teamCell(t, false)}</td><td>${t.highs}</td>
-      <td class="money big">${usd(t.winnings)}</td></tr>`).join('')}
-  </tbody></table></div>${zero.length ? `<div class="note">Still looking for a first payday: ${zero.map(t => `<span data-tid="${t.id}">${esc(t.name)}</span>`).join(', ')}.</div>` : ''}` : '<p class="muted">No weeks paid yet.</p>';
-  const log = `<div class="scroll"><table class="t">
-    <thead><tr><th scope="col">Wk</th><th scope="col" class="l">High score</th><th scope="col">Points</th><th scope="col" class="opt" title="Margin over the second-best score">Margin</th></tr></thead><tbody>
-    ${[...c.payouts].reverse().map(p => { const rows = regRows(d, p.week).map(r => r.points ?? 0).sort((x, y) => y - x);
-      return `<tr><td>${p.week}</td><td class="l wrap">${p.winners.map(id => teamCell(d.teams[id], false)).join(' ')}${p.winners.length > 1 ? ` <span class="muted">· split, <span class="money">${usd(p.each)}</span> each</span>` : ''}</td><td class="strong">${f2(p.score)}</td><td class="opt muted">${rows.length > 1 ? '+' + f2(rows[0] - rows[1]) : ''}</td></tr>`; }).join('')
-      || '<tr><td colspan="4" class="l muted">No completed weeks yet.</td></tr>'}
-  </tbody></table></div>`;
-  const terms = `${usd(pay)} a week${CONFIG.splitTies ? ' · ties split' : ''} · ${CONFIG.payPlayoffWeeks ? 'playoffs included' : 'regular season'}`;
-  return sec('High-score money', terms, tally + `<div class="cols even"><div><div class="sub-h">Paid so far</div>${table}</div><div><div class="sub-h">Week by week</div>${log}</div></div>`);
-}
 
 // ============================== MANAGERS ==============================
 function tabManagers(b) {
@@ -1574,13 +1495,13 @@ function tabHistory(seasons) {
         if (g.pa > g.pb) { k1[B.uid].w++; k2[A.uid].l++; } else if (g.pb > g.pa) { k2[A.uid].w++; k1[B.uid].l++; }
       }
     }
-    trophies.push({ season: d.league.season, done, champ: d.champion != null ? d.teams[d.champion] : null, ru: d.runnerUp != null ? d.teams[d.runnerUp] : null,
+    trophies.push({ id: d.league.league_id, season: d.league.season, done, champ: d.champion != null ? d.teams[d.champion] : null, ru: d.runnerUp != null ? d.teams[d.runnerUp] : null,
       top: c.list[0], most: [...c.list].sort((x, y) => y.pf - x.pf)[0], last: c.list.at(-1), money: [...c.list].sort((x, y) => y.highs - x.highs)[0] });
   }
 
   const trophyTable = `<div class="scroll"><table class="t">
     <thead><tr><th scope="col" class="l">Year</th><th scope="col" class="l">Champion</th><th scope="col" class="l opt">Runner-up</th><th scope="col" class="l opt">Best record</th><th scope="col" class="l opt">Most points</th><th scope="col" class="l">Last place</th></tr></thead><tbody>
-    ${trophies.map(x => `<tr><td class="l strong">${esc(x.season)}</td>
+    ${trophies.map(x => `<tr><td class="l strong">${x.id === cur.league.league_id ? esc(x.season) : `<button type="button" class="lnk" data-season="${esc(x.id)}">${esc(x.season)}</button>`}</td>
       <td class="l wrap">${x.done ? (x.champ ? `<b>${nm(x.champ)}</b>` : '–') : '<span class="muted">In progress</span>'}</td><td class="l wrap opt">${x.done ? nm(x.ru) : ''}</td>
       <td class="l wrap opt">${nm(x.top, ` <span class="muted">${rec(x.top)}</span>`)}</td><td class="l wrap opt">${nm(x.most, ` <span class="muted">${f2(x.most.pf)}</span>`)}</td>
       <td class="l wrap">${x.done ? nm(x.last) : '<span class="muted">TBD</span>'}</td></tr>`).join('')}
@@ -1592,12 +1513,12 @@ function tabHistory(seasons) {
   const curUids = new Set(Object.values(newest.d.teams).map(t => t.uid).filter(Boolean));
   const all = Object.values(byUid).filter(r => latest[r.uid]).sort((a, b) => b.titles - a.titles || winPct(b) - winPct(a));
   const allTime = `<div class="scroll"><table class="t">
-    <thead><tr><th scope="col" class="l">Manager</th><th scope="col" class="opt">Seasons</th><th scope="col">Titles</th><th scope="col" class="opt">Finals</th><th scope="col">Playoffs</th><th scope="col">Record</th><th scope="col" class="opt">Win %</th><th scope="col" class="opt">Pts / game</th><th scope="col" class="opt">Weekly highs</th></tr></thead><tbody>
+    <thead><tr><th scope="col" class="l">Manager</th><th scope="col" class="opt">Seasons</th><th scope="col">Titles</th><th scope="col" class="opt">Finals</th><th scope="col" title="Seasons that made the playoffs">Playoff trips</th><th scope="col">Record</th><th scope="col" class="opt">Win %</th><th scope="col" class="opt">Pts / game</th><th scope="col" class="opt">Weekly highs</th></tr></thead><tbody>
     ${all.map(r => { const gw = r.w + r.mw, gl = r.l + r.ml; return `<tr data-uid="${esc(r.uid)}"><td class="l wrap"><b>${esc(who(r.uid))}</b>${(sub => sub ? `<span class="as">${sub}</span>` : '')([sameName(latest[r.uid].owner, who(r.uid)) ? '' : esc(latest[r.uid].owner), curUids.has(r.uid) ? '' : 'former member'].filter(Boolean).join(' · '))}</td>
       <td class="opt">${r.seasons}</td><td class="${r.titles ? 'big' : 'muted'}">${r.titles || '0'}</td><td class="opt">${r.finals}</td><td>${r.playoffs}</td>
       <td class="strong">${gw}-${gl}</td><td class="opt">${(winPct(r) * 100).toFixed(1)}%</td>
       <td class="opt">${f2(r.pf / Math.max(1, r.games))}</td><td class="opt">${r.highs}</td></tr>`; }).join('')}
-  </tbody></table></div><div class="note">Regular-season records over ${seasons.length} seasons on Sleeper, median games included. Playoffs and finals count finished seasons.</div>`;
+  </tbody></table></div><div class="note">Sorted by titles, then win %. Regular-season records over ${seasons.length} seasons on Sleeper, median games included. Playoff trips and finals count finished seasons.</div>`;
 
   records.sort((a, b) => b.p - a.p);
   results.sort((a, b) => b.m - a.m);
@@ -1632,8 +1553,9 @@ function tabHistory(seasons) {
   const rivalNote = top ? `<p class="note" style="margin: 0 0 10px">Most-played series: ${esc(who(top.a))} vs. ${esc(who(top.b))}, ${top.v.w}-${top.v.l} over ${top.n} meetings.</p>` : '';
 
   const warn = seasons.missing ? warnBox('Some past seasons didn\'t fully load from Sleeper, so history may be incomplete.') : '';
-  return warn + sec('Champions', `${seasons.length} seasons on Sleeper`, trophyTable) + sec('All-time standings', '', allTime)
-    + sec('Record book', 'Regular season, every season', recs) + sec('Head to head', 'All-time regular season · most meetings first', rivalNote + ordered.map(rivalBlock).join(''), rivalPick);
+  return warn + sec('Champions', `${seasons.length} seasons on Sleeper · pick a year to open that season`, trophyTable)
+    + sec('Head to head', 'All-time regular season · most meetings first', rivalNote + ordered.map(rivalBlock).join(''), rivalPick)
+    + sec('All-time standings', '', allTime) + sec('Record book', 'Regular season, every season', recs);
 }
 
 // ============================== FLOW ==============================
@@ -1657,6 +1579,7 @@ function markMine() {
   const b = state.cur, t = b && myTeam(b.d), uid = myUid();
   document.querySelectorAll('#app [data-tid]').forEach(el => el.classList.toggle('me', !!t && el.dataset.tid === String(t.id)));
   document.querySelectorAll('#app [data-uid]').forEach(el => el.classList.toggle('me', !!uid && el.dataset.uid === uid));
+  document.querySelectorAll('#app [data-tids]').forEach(el => el.classList.toggle('me', !!t && el.dataset.tids.split(' ').includes(String(t.id))));
 }
 
 // keepView (live refreshes): the redraw keeps open toggles, sideways scroll positions and picked weeks, so a reader isn't moved.
@@ -1676,7 +1599,7 @@ async function renderTab({ keepView = false } = {}) {
     return;
   }
   const warn = b.d.failed ? warnBox('Some data didn\'t load from Sleeper, so a few numbers may be off.') : '';
-  $('#app').innerHTML = warn + (t === 'table' ? tabTable(b) : t === 'money' ? tabMoney(b) : t === 'managers' ? tabManagers(b) : tabWeek(b));
+  $('#app').innerHTML = warn + (t === 'table' ? tabTable(b) : t === 'managers' ? tabManagers(b) : tabWeek(b));
   if (view) {
     view.open.forEach(k => { const el = document.querySelector(`#app details[data-k="${k}"]`); if (el) el.open = true; });
     view.picks.forEach(([k, v]) => { const el = document.querySelector(`#app select[data-pick="${k}"]`); if (el && [...el.options].some(o => o.value === v)) { el.value = v; showPick(el); } });
@@ -1684,6 +1607,7 @@ async function renderTab({ keepView = false } = {}) {
   }
   document.querySelectorAll('#app .scroll').forEach(el => el.classList.toggle('scrolled', el.scrollLeft > 2));
   markMine();
+  if (!view && location.hash === '#money' && $('#money')) { $('#money').scrollIntoView(); history.replaceState(null, '', '#week'); }
 }
 // A <select data-pick="k"> shows the matching [data-pick-of="k"][data-v] block and hides the others.
 function showPick(sel) {
@@ -1740,30 +1664,29 @@ async function refreshLive() {
 }
 
 // ============================== START ==============================
-function fillSeasons() {
-  $('#season').innerHTML = state.chain.map(x => `<option value="${x.id}">${esc(x.season)}</option>`).join('');
-  $('#season').value = state.cur?.d.league.league_id ?? state.chain[0]?.id;
+// Past seasons open from the History tab's Champions table, and the header links back. The URL keeps ?season=.
+function goSeason(id) {
+  const x = state.chain.find(s => s.id === id), url = new URL(location.href);
+  if (x && x !== state.chain[0]) url.searchParams.set('season', x.season); else url.searchParams.delete('season');
+  url.hash = 'week';
+  history.replaceState(null, '', url);
+  state.tab = 'week';
+  window.scrollTo(0, 0);
+  openSeason(id);
 }
 // The season list builds in the background, so the current season shows without waiting on older ones.
 async function init() {
-  $('#season').onchange = e => {
-    const x = state.chain.find(s => s.id === e.target.value), url = new URL(location.href);
-    if (x && x !== state.chain[0]) url.searchParams.set('season', x.season); else url.searchParams.delete('season');
-    history.replaceState(null, '', url);
-    openSeason(e.target.value);
-  };
   const setMine = uid => { try { localStorage.setItem(MINE_KEY, uid); } catch {} renderTab(); };
   $('#mine').onchange = e => setMine(e.target.value);
-  $('#refresh').onclick = () => { state.cache = {}; state.history = null; openSeason($('#season').value); };
   document.addEventListener('click', async e => {
-    if (e.target.closest('[data-retry]')) $('#refresh').click();
-    const sg = e.target.closest('[data-seg]');
-    if (sg) { state.seg[sg.dataset.seg] = sg.dataset.v; renderTab({ keepView: true }); }
+    if (e.target.closest('[data-retry]')) { state.cache = {}; state.history = null; openSeason(state.cur?.d.league.league_id || state.chain[0]?.id); }
+    const sn = e.target.closest('[data-season]');
+    if (sn) goSeason(sn.dataset.season);
     const cp = e.target.closest('[data-copy-recap]');
     if (cp && state.cur) {
       try { await navigator.clipboard.writeText(recapText(state.cur)); cp.textContent = 'Copied'; }
       catch { cp.textContent = 'Couldn\'t copy'; }
-      setTimeout(() => { cp.textContent = 'Copy recap for the group chat'; }, 2000);
+      setTimeout(() => { cp.textContent = COPY_LABEL; }, 2000);
     }
   });
   document.addEventListener('change', e => {
@@ -1771,19 +1694,18 @@ async function init() {
   });
   // Sideways-scrolled tables fade the edge of the sticky team column.
   document.addEventListener('scroll', e => { const el = e.target; if (el.classList?.contains('scroll')) el.classList.toggle('scrolled', el.scrollLeft > 2); }, true);
-  window.addEventListener('hashchange', () => { state.tab = tabFromHash(); renderTab(); window.scrollTo(0, 0); });
+  window.addEventListener('hashchange', () => { state.tab = tabFromHash(); window.scrollTo(0, 0); renderTab(); });
   try {
     const first = await get(`/league/${CONFIG.leagueId}`);
     state.chain = [{ id: first.league_id, season: first.season, league: first }];
-    fillSeasons();
     state.chainDone = seasonChain(first.previous_league_id)
-      .then(rest => { state.chain.push(...rest); fillSeasons(); })
+      .then(rest => { state.chain.push(...rest); })
       .catch(e => console.warn('season list', e));
     const want = qs.get('season');
     if (want && want !== first.season) {
       await state.chainDone;
       const x = state.chain.find(s => s.season === want);
-      if (x) { $('#season').value = x.id; return openSeason(x.id); }
+      if (x) return openSeason(x.id);
     }
     await openSeason(first.league_id);
   } catch (e) {
