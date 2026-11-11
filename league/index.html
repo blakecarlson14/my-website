@@ -117,7 +117,7 @@
   details.how p { margin: 4px 0 8px; }
 
   /* Your team, everywhere */
-  [data-tid].me:not(tr):not(.bt):not(.gl) .nm, span[data-tid].me { color: var(--you); font-weight: 700; }
+  [data-tid].me:not(tr):not(.bt):not(.gl) .nm, [data-tids].me .nm, span[data-tid].me { color: var(--you); font-weight: 700; }
   .t tr.me td, .gl.me, .bt.me, .pot li.me { background: var(--you-bg); }
   .t tr.me td:first-child, .pot li.me { box-shadow: inset 3px 0 0 var(--you); }
   .pot li.me, .pot ol.led li.me { margin: 0 -10px; padding-left: 10px; padding-right: 10px; }
@@ -1150,9 +1150,9 @@ function potBlock(b) {
     const top = list.length && m ? odds.top : null;
     // The top three (with ties). During games, also anyone further down who still shows a real chance at the $.
     const shown = list.filter((x, i) => i < 3 || x.v >= list[2].v - 1e-9 || (live && Math.round((top?.[x.id] ?? 0) * 100) >= 10));
-    const st = (live ? `Live. The highest score when Week ${w} ends wins ${usd(pay)}.` : `The highest score in Week ${w} wins ${usd(pay)}.`) + (top ? ' Chance: odds of finishing on top.' : '');
+    const st = (live ? `Live. The highest score when Week ${w} ends wins ${usd(pay)}.` : `The highest score in Week ${w} wins ${usd(pay)}.`);
     race = `<div class="pot-h"><span class="amt">${usd(pay)}</span><span class="what">Week ${w} high score</span><span class="st">${st}</span></div>
-      ${list.length ? `<div class="cols-h"><span>${live ? 'Score' : 'Expected'}</span>${top ? '<span>Chance</span>' : ''}</div>
+      ${list.length ? `<div class="cols-h"><span>${live ? 'Score' : 'Expected'}</span>${top ? `<span title="Each team's odds of the top score in Week ${w}">Chance</span>` : ''}</div>
       <ol class="race ${live ? 'live' : ''}">${shown.map(x => { const r = rankIn(list.map(y => y.v), x.v);
         return `<li data-tid="${x.id}" class="${r === 1 ? 'top' : ''}"><span class="n">${r}</span>${teamCell(d.teams[x.id], false)}<span class="pts">${live ? f2(x.v) : f1(x.v)}</span>${top ? `<span class="pct">${pct(top[x.id])}</span>` : ''}</li>`; }).join('')}</ol>` : ''}`;
   } else if (c.payouts.length) {
