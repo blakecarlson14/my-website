@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import ChessPage from "./pages/ChessPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import MemePage from "./pages/MemePage";
+import HollowMinePage from "./pages/HollowMinePage";
 import NotFound from "./pages/NotFound";
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="chess" element={<ChessPage />} />
+        <Route path="hollow-mine" element={<HollowMinePage />} />
         <Route path="lab/calculator" element={<CalculatorPage />} />
         <Route path="lab/meme-generator" element={<MemePage />} />
         {/* Paths from the old site */}

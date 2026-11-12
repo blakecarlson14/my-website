@@ -18,6 +18,8 @@ npm run deploy    # build, then publish dist/ to the gh-pages branch
 | `src/pages/ChessPage.tsx` | Jev Plays Chess: link, optional embed, how it works |
 | `src/pages/CalculatorPage.tsx`, `src/lib/calculator.ts` | Calculator UI and its tested state machine |
 | `src/pages/MemePage.tsx` | Canvas meme generator using imgflip templates |
+| `src/pages/HollowMinePage.tsx` | The Hollow Mine: start button, embedded game, controls |
+| `public/games/the-hollow-mine/` | The game's Godot web export, served as static files |
 | `src/styles.css` | All styles; colors are tokens at the top, with light and dark themes |
 
 ## Routing on GitHub Pages
@@ -32,3 +34,14 @@ The game runs on its own server (see the jev-plays-chess repo). Set `chess.url` 
 - `"open"`: no access code. The page also embeds the game in an iframe.
 
 Never put the access code in this repo; everything here is public.
+
+## The Hollow Mine
+
+The game is a Godot 4.7 project in the the-hollow-mine repo. Its `Web` export preset builds a single-threaded version, which GitHub Pages can serve without special headers. To update the game here, export it from that repo and copy the output over this site's copy:
+
+```bash
+Godot_v4.7.2-stable_win64_console.exe --headless --path . --export-release "Web" build/web/index.html
+cp build/web/* ../my-website/public/games/the-hollow-mine/
+```
+
+Then run `npm run deploy` here. The page lives at `/hollow-mine`; the static export is at `/games/the-hollow-mine/`, so those two paths must stay different.

@@ -16,6 +16,7 @@ export default function Layout() {
           <nav aria-label="Main">
             <NavLink to="/" end>Home</NavLink>
             <NavLink to="/chess">Chess</NavLink>
+            <NavLink to="/hollow-mine">Game</NavLink>
             <a href={site.github} target="_blank" rel="noreferrer">GitHub</a>
             <ThemeToggle />
           </nav>
