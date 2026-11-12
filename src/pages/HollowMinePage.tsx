@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { hollowMinePrompt } from "../content/hollowMinePrompt";
 
 // The Godot web export lives in public/games/the-hollow-mine (see the README for how to rebuild it).
 const GAME_SRC = "/games/the-hollow-mine/index.html";
@@ -18,7 +19,23 @@ const enemies = [
 
 export default function HollowMinePage() {
   const [started, setStarted] = useState(false);
+  const [copyLabel, setCopyLabel] = useState("Copy");
   const frame = useRef<HTMLIFrameElement>(null);
+  const promptBody = useRef<HTMLPreElement>(null);
+
+  const copyPrompt = () => {
+    const done = (label: string) => {
+      setCopyLabel(label);
+      setTimeout(() => setCopyLabel("Copy"), 2500);
+    };
+    // If the clipboard is blocked, select the prompt so it can be copied by hand.
+    const selectInstead = () => {
+      if (promptBody.current) window.getSelection()?.selectAllChildren(promptBody.current);
+      done("Selected, press Ctrl+C");
+    };
+    if (!navigator.clipboard) return selectInstead();
+    navigator.clipboard.writeText(hollowMinePrompt).then(() => done("Copied"), selectInstead);
+  };
 
   // Keys only reach the game while its frame has focus, so focus it on load and on fullscreen.
   const focusGame = () => frame.current?.contentWindow?.focus();
@@ -110,6 +127,23 @@ export default function HollowMinePage() {
             </li>
           ))}
         </ol>
+      </section>
+
+      <section className="wrap section" aria-labelledby="made">
+        <h2 id="made" className="section__title">How it was made</h2>
+        <p className="section__intro">
+          Claude Code built the whole game, art, sound and music included, from the prompt below. After that it took
+          only a few short follow-ups: a new name, a desktop launcher, and putting it on this site.
+        </p>
+        <div className="prompt">
+          <div className="prompt__bar">
+            <span>The prompt</span>
+            <button type="button" className="link-button" onClick={copyPrompt} aria-live="polite">
+              {copyLabel}
+            </button>
+          </div>
+          <pre ref={promptBody} className="prompt__body">{hollowMinePrompt}</pre>
+        </div>
       </section>
     </>
   );
