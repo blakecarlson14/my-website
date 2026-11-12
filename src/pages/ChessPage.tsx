@@ -25,7 +25,7 @@ export default function ChessPage() {
         <div>
           <h1>Jev Plays Chess</h1>
           <p className="lede">
-            You play White against Jev, a fast model that has never been given a chess engine. It sees the board only
+            You play White or Black against Jev, a fast model that has never been given a chess engine. It sees the board only
             as plain-language facts, then chooses every move itself.
           </p>
           <p className="actions">
