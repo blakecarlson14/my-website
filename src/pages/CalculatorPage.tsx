@@ -33,9 +33,8 @@ export default function CalculatorPage() {
 
   return (
     <section className="wrap page-head">
-      <p className="eyebrow">Lab</p>
       <h1>Calculator</h1>
-      <p className="lede">An iPhone-style calculator, rebuilt from one of my first React components. Your keyboard works too.</p>
+      <p className="lede">An iPhone-style calculator, rebuilt from one of the first React components I wrote, back in 2021. Your keyboard works too.</p>
       <div className="calculator">
         <output className={`calculator__screen ${textSize}`} aria-live="polite">{state.display}</output>
         <div className="calculator__keys">
@@ -48,7 +47,7 @@ export default function CalculatorPage() {
                 className={`calc-key calc-key--${tone}${wide ? " is-wide" : ""}${active ? " is-active" : ""}`}
                 onClick={() => dispatch(clearKey)}
               >
-                {clearKey}
+                {clearKey === "-" ? "−" : clearKey}
               </button>
             );
           })}

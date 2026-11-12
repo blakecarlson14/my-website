@@ -94,9 +94,8 @@ export default function MemePage() {
 
   return (
     <section className="wrap page-head">
-      <p className="eyebrow">Lab</p>
       <h1>Meme Generator</h1>
-      <p className="lede">Originally a React course project. Now it draws to a canvas, so you can download what you make.</p>
+      <p className="lede">A React course project from 2021. It now draws to a canvas, so you can download what you make.</p>
       <div className="meme">
         <div className="meme__controls">
           <label className="field">
@@ -114,8 +113,8 @@ export default function MemePage() {
             <input value={bottomText} onChange={(e) => setBottomText(e.target.value)} />
           </label>
           <div className="meme__buttons">
-            <button className="button button--ghost" onClick={randomTemplate}>Random template</button>
             <button className="button" onClick={download} disabled={!image}>Download PNG</button>
+            <button className="button button--ghost" onClick={randomTemplate}>Random template</button>
           </div>
         </div>
         <canvas ref={canvas} className="meme__canvas" role="img" aria-label={`${template.name} meme: ${topText} / ${bottomText}`} />

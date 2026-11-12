@@ -4,6 +4,9 @@ import { hollowMinePrompt } from "../content/hollowMinePrompt";
 // The Godot web export lives in public/games/the-hollow-mine (see the README for how to rebuild it).
 const GAME_SRC = "/games/the-hollow-mine/index.html";
 
+// The game has no touch controls, so phones and tablets get the screenshot without a start button.
+const touchOnly = () => window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+
 const controls = [
   { action: "Move", keyboard: "Arrow keys or A / D", gamepad: "D-pad or left stick" },
   { action: "Jump (hold to go higher)", keyboard: "Space, Z, K, W or Up", gamepad: "A" },
@@ -20,6 +23,8 @@ const enemies = [
 export default function HollowMinePage() {
   const [started, setStarted] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copy");
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [touch] = useState(touchOnly);
   const frame = useRef<HTMLIFrameElement>(null);
   const promptBody = useRef<HTMLPreElement>(null);
 
@@ -47,7 +52,6 @@ export default function HollowMinePage() {
   return (
     <>
       <section className="wrap page-head">
-        <p className="eyebrow">Game · Platformer</p>
         <h1>The Hollow Mine</h1>
         <p className="lede">
           A 16-bit style side-scroller. Guide Wick, a young miner with a brass helmet lamp, through an abandoned
@@ -55,7 +59,7 @@ export default function HollowMinePage() {
         </p>
       </section>
 
-      <section className="wrap section" aria-label="Game">
+      <section className="wrap section section--tight" aria-label="Game">
         <div className="game-frame">
           {started ? (
             <iframe
@@ -65,14 +69,17 @@ export default function HollowMinePage() {
               allow="autoplay; fullscreen; gamepad"
               onLoad={focusGame}
             />
+          ) : touch ? (
+            <img className="game-frame__poster" src="/img/hollow-mine.png" alt="The Hollow Mine: Wick at the start of the first stage." width={384} height={216} />
           ) : (
             <button type="button" className="game-frame__start" onClick={() => setStarted(true)}>
+              <img src="/img/hollow-mine.png" alt="" width={384} height={216} />
               <span className="button">Start the game</span>
               <span className="game-frame__note">About a 40 MB download. Best with a keyboard or a gamepad.</span>
             </button>
           )}
         </div>
-        <p className="embed__caption">
+        <p className="caption">
           {started ? (
             <>
               Keys not working? Click the game first.{" "}
@@ -81,13 +88,15 @@ export default function HollowMinePage() {
               <a href={GAME_SRC} target="_blank" rel="noreferrer">Open in its own tab</a>
             </>
           ) : (
-            <>Runs in your browser. Phones and tablets aren’t supported yet, since there are no touch controls.</>
+            touch
+              ? <>Phones and tablets aren’t supported yet, since the game has no touch controls. Open this page on a computer to play.</>
+              : <>Runs in your browser. Phones and tablets aren’t supported yet, since there are no touch controls.</>
           )}
         </p>
       </section>
 
-      <section className="wrap section" aria-labelledby="controls">
-        <h2 id="controls" className="section__title">Controls</h2>
+      <section className="wrap section prose" aria-labelledby="controls">
+        <h2 id="controls">Controls</h2>
         <div className="table-scroll">
           <table className="controls">
             <thead>
@@ -106,8 +115,8 @@ export default function HollowMinePage() {
         </div>
       </section>
 
-      <section className="wrap section" aria-labelledby="rules">
-        <h2 id="rules" className="section__title">How to play</h2>
+      <section className="wrap section prose" aria-labelledby="rules">
+        <h2 id="rules">How to play</h2>
         <ul className="rules">
           <li>Stomp enemies by landing on them. Touching one from the side or below costs a heart. Chain stomps without landing for 100, 200, 400, 800, then 1600 points.</li>
           <li>You have 3 hearts and 3 lives. Pits are instant death. Losing a life sends you back to the last lit checkpoint.</li>
@@ -117,20 +126,20 @@ export default function HollowMinePage() {
         </ul>
       </section>
 
-      <section className="wrap section" aria-labelledby="enemies">
-        <h2 id="enemies" className="section__title">What lives down there</h2>
-        <ol className="steps">
+      <section className="wrap section prose" aria-labelledby="enemies">
+        <h2 id="enemies">Enemies</h2>
+        <dl className="defs">
           {enemies.map((enemy) => (
-            <li key={enemy.name}>
-              <h3>{enemy.name}</h3>
-              <p>{enemy.body}</p>
-            </li>
+            <div key={enemy.name}>
+              <dt>{enemy.name}</dt>
+              <dd>{enemy.body}</dd>
+            </div>
           ))}
-        </ol>
+        </dl>
       </section>
 
-      <section className="wrap section" aria-labelledby="made">
-        <h2 id="made" className="section__title">How it was made</h2>
+      <section className="wrap section prose" aria-labelledby="made">
+        <h2 id="made">How it was made</h2>
         <p className="section__intro">
           Claude Code built the whole game, art, sound and music included, from the prompt below. After that it took
           only a few short follow-ups: a new name, a desktop launcher, and putting it on this site.
@@ -142,7 +151,16 @@ export default function HollowMinePage() {
               {copyLabel}
             </button>
           </div>
-          <pre ref={promptBody} className="prompt__body">{hollowMinePrompt}</pre>
+          <pre ref={promptBody} id="prompt-body" className={`prompt__body${promptOpen ? "" : " is-clipped"}`}>{hollowMinePrompt}</pre>
+          <button
+            type="button"
+            className="prompt__more"
+            aria-expanded={promptOpen}
+            aria-controls="prompt-body"
+            onClick={() => setPromptOpen(!promptOpen)}
+          >
+            {promptOpen ? "Show less" : "Show the whole prompt"}
+          </button>
         </div>
       </section>
     </>

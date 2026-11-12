@@ -14,7 +14,9 @@ npm run deploy    # build, then publish dist/ to the gh-pages branch
 | Path | What it is |
 |---|---|
 | `src/config.ts` | Site links and the Jev Plays Chess settings |
-| `src/pages/Home.tsx` | Intro, featured project, project and lab lists |
+| `src/pages/Home.tsx` | Intro paragraph and the project index |
+| `src/components/ChessDiagram.tsx` | Book-style chess diagram; holds the real Jev position shown on the site |
+| `public/img/hollow-mine.png` | Gameplay screenshot (384x216, shown pixelated) |
 | `src/pages/ChessPage.tsx` | Jev Plays Chess: link, optional embed, how it works |
 | `src/pages/CalculatorPage.tsx`, `src/lib/calculator.ts` | Calculator UI and its tested state machine |
 | `src/pages/MemePage.tsx` | Canvas meme generator using imgflip templates |
